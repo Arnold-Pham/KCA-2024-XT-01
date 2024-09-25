@@ -1,5 +1,7 @@
 # PROJECT KCA-2024-XT-01
 
+[Français](./docs/fr/README.md) | [English](./docs/en/README.md)
+
 ## Description
 
 Welcome to the **KCA-2024-XT-01** project, an innovative chat application designed to revolutionize user communication by integrating multiple systems and modern technologies. This project is developed using **React Js** and utilizes a robust architecture to ensure high performance, enhanced security, and a smooth user experience across different platforms.
