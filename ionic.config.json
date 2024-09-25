@@ -1,0 +1,7 @@
+{
+	"name": "KCA-2024-XT-01",
+	"integrations": {
+		"capacitor": {}
+	},
+	"type": "react-vite"
+}
