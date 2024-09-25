@@ -1,97 +1,97 @@
-# PROJET KCA-2024-XT-01
+# PROJECT KCA-2024-XT-01
 
 ## Description
 
-Bienvenue dans le projet **KCA-2024-XT-01**, une application de chat innovante conçue pour révolutionner la communication entre utilisateurs en intégrant plusieurs systèmes et technologies modernes. Ce projet est développé avec React Js et utilise une architecture robuste pour garantir des performances élevées, une sécurité renforcée, et une expérience utilisateur fluide sur différentes plateformes.
+Welcome to the **KCA-2024-XT-01** project, an innovative chat application designed to revolutionize user communication by integrating multiple systems and modern technologies. This project is developed using **React Js** and utilizes a robust architecture to ensure high performance, enhanced security, and a smooth user experience across different platforms.
 
-L'application propose une communication enrichie en offrant des fonctionnalités avancées telles que l'ajout d'amis, les messages privés, les groupes de discussion, le support multimédia, et bien plus encore. Elle est pensée pour être évolutive et adaptable, permettant ainsi une intégration facile de nouvelles fonctionnalités à l'avenir.
+The application provides enriched communication with advanced features such as friend management, private messaging, chat groups, multimedia support, and much more. It is designed to be scalable and adaptable, allowing for the easy integration of new features in the future.
 
-## Technologies Utilisées
+## Technologies Used
 
--   **React Js**: Pour la création de l'interface utilisateur dynamique et réactive
--   **Convex**: Comme base de données pour la gestion des données en temps réel, permettant des mises à jour instantanées dans l'interface utilisateur
--   **Auth0**: Pour la gestion de l'authentification des utilisateurs, offrant des fonctionnalités de connexion sécurisée et de gestion des comptes
--   **Ionic**: Pour le déploiement de l'application sur divers appareils mobiles et plateformes, garantissant une expérience utilisateur cohérente
+-   **React Js**: For building the dynamic and responsive user interface
+-   **Convex**: As a database for real-time data management, enabling instant updates in the user interface
+-   **Auth0**: For user authentication management, providing secure login and account management features
+-   **Ionic**: For deploying the application on various mobile devices and platforms, ensuring a consistent user experience
 
-## Fonctionnalités Principales à Venir
+## Key Upcoming Features
 
-L'application de chat propose une variété de fonctionnalités pour améliorer l'expérience utilisateur, notamment:
+The chat application offers a variety of features to enhance the user experience, including:
 
--   **Ajout d'Amis**:
+-   **Friend Management**:
 
-    -   Gérez votre liste d'amis pour contrôler avec qui vous interagissez
-    -   Possibilité d'accepter ou de refuser les demandes d'amis et de bloquer des utilisateurs
+    -   Manage your friend list to control who you interact with
+    -   Ability to accept or decline friend requests and block users
 
--   **Messages Privés**:
+-   **Private Messaging**:
 
-    -   Envoyez des messages sécurisés et confidentiels à d'autres utilisateurs
-    -   Fonctionnalité de signalement et de blocage pour éviter les abus
+    -   Send secure and confidential messages to other users
+    -   Reporting and blocking features to prevent abuse
 
--   **Groupes de Chat**:
+-   **Chat Groups**:
 
-    -   Créez et gérez des groupes de discussion pour des échanges collaboratifs
-    -   Fonctionnalités d'administration pour ajouter/supprimer des membres et attribuer des permissions
+    -   Create and manage discussion groups for collaborative exchanges
+    -   Administration features to add/remove members and assign permissions
 
--   **Codes d'Invitation**:
+-   **Invitation Codes**:
 
-    -   Facilitez l'ajout de membres dans des groupes avec des codes d'invitation uniques
-    -   Limitez l'accès aux groupes pour plus de confidentialité
+    -   Easily add members to groups with unique invitation codes
+    -   Restrict group access for increased privacy
 
--   **Support Multimédia**:
+-   **Multimedia Support**:
 
-    -   Partagez des images, vidéos, fichiers audio, et documents directement dans les discussions
-    -   Prévisualisation intégrée des médias envoyés
+    -   Share images, videos, audio files, and documents directly in chats
+    -   Integrated preview of shared media
 
--   **Réactions aux Messages**:
+-   **Message Reactions**:
 
-    -   Réagissez aux messages avec des emojis pour dynamiser les discussions
-    -   Suivez les réactions les plus populaires dans les conversations
+    -   React to messages with emojis to liven up conversations
+    -   Track the most popular reactions in discussions
 
--   **Épinglage de Messages**:
+-   **Message Pinning**:
 
-    -   Mettez en avant les messages importants pour un accès rapide
-    -   Fonctionnalité idéale pour les annonces ou les rappels importants
+    -   Highlight important messages for quick access
+    -   Ideal feature for announcements or important reminders
 
--   **Gestion des Membres**:
+-   **Member Management**:
 
-    -   Gérez les membres de vos groupes de chat: ajouts, suppressions, et modification des rôles
-    -   Contrôle des permissions pour assurer la sécurité et l'organisation du groupe
+    -   Manage group members: add, remove, and modify roles
+    -   Control permissions to ensure group security and organization
 
--   **Communication en Direct**:
+-   **Live Communication**:
 
-    -   Discutez en temps réel avec des messages textuels, audio, ou vidéo
-    -   Fonctionnalités de haute qualité pour une expérience fluide et sans interruption
+    -   Chat in real-time with text, audio, or video messages
+    -   High-quality features for a smooth, uninterrupted experience
 
--   **Intégration NAS**:
-    -   Connectez votre NAS personnel pour le téléchargement, le partage, et la sauvegarde de fichiers
-    -   Accédez facilement à vos documents stockés en local depuis l'application
+-   **NAS Integration**:
+    -   Connect your personal NAS for file download, sharing, and backup
+    -   Easily access your locally stored documents from the app
 
 ## Roadmap
 
-Nous prévoyons d'ajouter les fonctionnalités suivantes dans les prochaines versions:
+We plan to add the following features in future versions:
 
--   **Notifications Avancées**: Personnalisation des alertes pour les messages, mentions, et activités importantes.
--   **Système de Thèmes**: Choisissez parmi différents thèmes pour personnaliser l'apparence de l'application.
--   **Mode Hors-Ligne**: Possibilité de consulter les messages et de composer des réponses sans connexion, avec synchronisation ultérieure.
+-   **Advanced Notifications**: Customizable alerts for messages, mentions, and important activities
+-   **Theme System**: Choose from different themes to personalize the app's appearance
+-   **Offline Mode**: Ability to view messages and compose responses without a connection, with later synchronization
 
-## Commandes Disponibles
+## Available Commands
 
-Voici les différentes commandes npm disponibles pour interagir avec le projet:
+Here are the various npm commands available to interact with the project:
 
--   `npm run dev`: Démarre à la fois le frontend et le backend en mode développement, permettant de tester les fonctionnalités en temps réel
--   `npm run dev:frontend`: Lance uniquement le serveur de développement de l'application frontend avec Vite
--   `npm run dev:backend`: Démarre le serveur backend avec Convex en mode développement
--   `npm run build`: Compile le projet TypeScript et construit la version de production de l'application avec Vite
--   `npm run preview`: Prévisualise la version construite de l'application dans le navigateur, permettant de tester la version finale avant le déploiement
--   `npm run test:e2e`: Exécute les tests de bout en bout avec Cypress, garantissant que l'application fonctionne comme prévu pour l'utilisateur final
--   `npm run test:unit`: Exécute les tests unitaires avec Vitest pour s'assurer que chaque composant fonctionne correctement individuellement
--   `npm run lint`: Vérifie le code avec ESLint pour garantir qu'il respecte les conventions de codage et les meilleures pratiques
--   `npm run git`: Exécute le script `git.mjs` pour formater le code, mettre à jour les dépendances et effectuer un commit automatiquement
+-   `npm run dev`: Starts both the frontend and backend in development mode, allowing you to test features in real-time
+-   `npm run dev:frontend`: Starts only the frontend development server using Vite
+-   `npm run dev:backend`: Starts the backend server with Convex in development mode
+-   `npm run build`: Compiles the TypeScript project and builds the production version of the app with Vite
+-   `npm run preview`: Previews the built version of the app in the browser, allowing you to test the final version before deployment
+-   `npm run test:e2e`: Runs end-to-end tests with Cypress, ensuring that the app works as expected for the end user
+-   `npm run test:unit`: Runs unit tests with Vitest to ensure that each component works correctly individually
+-   `npm run lint`: Checks the code with ESLint to ensure it adheres to coding conventions and best practices
+-   `npm run git`: Executes the `git.mjs` script to format the code, update dependencies, and commit automatically
 
-## Développement
+## Development
 
-Actuellement, le développement de ce projet est géré par un seul développeur. Toute contribution est la bienvenue pour accélérer le développement et améliorer l'application. N'hésitez pas à créer des issues ou à proposer des pull requests.
+Currently, the development of this project is managed by a single developer. Contributions are welcome to speed up development and improve the application. Feel free to create issues or propose pull requests.
 
 ## License
 
-Ce projet est sous licence [MIT](LICENSE). Vous êtes libre de l'utiliser, de le modifier, et de le distribuer sous les termes de cette licence.
+This project is licensed under the [MIT](LICENSE). You are free to use, modify, and distribute it under the terms of this license.

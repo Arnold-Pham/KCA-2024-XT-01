@@ -10,10 +10,10 @@ The application provides enriched communication with advanced features such as f
 
 ## Technologies Used
 
--   **React Js**: For building the dynamic and responsive user interface.
--   **Convex**: As a database for real-time data management, enabling instant updates in the user interface.
--   **Auth0**: For user authentication management, providing secure login and account management features.
--   **Ionic**: For deploying the application on various mobile devices and platforms, ensuring a consistent user experience.
+-   **React Js**: For building the dynamic and responsive user interface
+-   **Convex**: As a database for real-time data management, enabling instant updates in the user interface
+-   **Auth0**: For user authentication management, providing secure login and account management features
+-   **Ionic**: For deploying the application on various mobile devices and platforms, ensuring a consistent user experience
 
 ## Key Upcoming Features
 
@@ -21,52 +21,52 @@ The chat application offers a variety of features to enhance the user experience
 
 -   **Friend Management**:
 
-    -   Manage your friend list to control who you interact with.
-    -   Ability to accept or decline friend requests and block users.
+    -   Manage your friend list to control who you interact with
+    -   Ability to accept or decline friend requests and block users
 
 -   **Private Messaging**:
 
-    -   Send secure and confidential messages to other users.
-    -   Reporting and blocking features to prevent abuse.
+    -   Send secure and confidential messages to other users
+    -   Reporting and blocking features to prevent abuse
 
 -   **Chat Groups**:
 
-    -   Create and manage discussion groups for collaborative exchanges.
-    -   Administration features to add/remove members and assign permissions.
+    -   Create and manage discussion groups for collaborative exchanges
+    -   Administration features to add/remove members and assign permissions
 
 -   **Invitation Codes**:
 
-    -   Easily add members to groups with unique invitation codes.
-    -   Restrict group access for increased privacy.
+    -   Easily add members to groups with unique invitation codes
+    -   Restrict group access for increased privacy
 
 -   **Multimedia Support**:
 
-    -   Share images, videos, audio files, and documents directly in chats.
-    -   Integrated preview of shared media.
+    -   Share images, videos, audio files, and documents directly in chats
+    -   Integrated preview of shared media
 
 -   **Message Reactions**:
 
-    -   React to messages with emojis to liven up conversations.
-    -   Track the most popular reactions in discussions.
+    -   React to messages with emojis to liven up conversations
+    -   Track the most popular reactions in discussions
 
 -   **Message Pinning**:
 
-    -   Highlight important messages for quick access.
-    -   Ideal feature for announcements or important reminders.
+    -   Highlight important messages for quick access
+    -   Ideal feature for announcements or important reminders
 
 -   **Member Management**:
 
-    -   Manage group members: add, remove, and modify roles.
-    -   Control permissions to ensure group security and organization.
+    -   Manage group members: add, remove, and modify roles
+    -   Control permissions to ensure group security and organization
 
 -   **Live Communication**:
 
-    -   Chat in real-time with text, audio, or video messages.
-    -   High-quality features for a smooth, uninterrupted experience.
+    -   Chat in real-time with text, audio, or video messages
+    -   High-quality features for a smooth, uninterrupted experience
 
 -   **NAS Integration**:
-    -   Connect your personal NAS for file download, sharing, and backup.
-    -   Easily access your locally stored documents from the app.
+    -   Connect your personal NAS for file download, sharing, and backup
+    -   Easily access your locally stored documents from the app
 
 ## Roadmap
 
@@ -92,7 +92,7 @@ Here are the various npm commands available to interact with the project:
 
 ## Development
 
-Currently, the development of this project is managed by a single developer. Contributions are welcome to speed up development and improve the application. Feel free to create issues or propose pull requests
+Currently, the development of this project is managed by a single developer. Contributions are welcome to speed up development and improve the application. Feel free to create issues or propose pull requests.
 
 ## License
 

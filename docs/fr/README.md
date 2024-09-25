@@ -70,9 +70,9 @@ L'application de chat propose une variété de fonctionnalités pour améliorer 
 
 Nous prévoyons d'ajouter les fonctionnalités suivantes dans les prochaines versions:
 
--   **Notifications Avancées**: Personnalisation des alertes pour les messages, mentions, et activités importantes.
--   **Système de Thèmes**: Choisissez parmi différents thèmes pour personnaliser l'apparence de l'application.
--   **Mode Hors-Ligne**: Possibilité de consulter les messages et de composer des réponses sans connexion, avec synchronisation ultérieure.
+-   **Notifications Avancées**: Personnalisation des alertes pour les messages, mentions, et activités importantes
+-   **Système de Thèmes**: Choisissez parmi différents thèmes pour personnaliser l'apparence de l'application
+-   **Mode Hors-Ligne**: Possibilité de consulter les messages et de composer des réponses sans connexion, avec synchronisation ultérieure
 
 ## Commandes Disponibles
 
