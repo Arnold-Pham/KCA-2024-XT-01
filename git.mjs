@@ -25,7 +25,10 @@ const run = async () => {
 	try {
 		await runCommand('npm update', 'Mise à jour des dépendances réussite', 'Erreur de mise à jour des dépendances')
 		await runCommand(
-			'prettier --write --trailing-comma none --arrow-parens avoid --bracket-spacing --end-of-line crlf --single-quote --print-width 150 --use-tabs --tab-width 4 --no-semi .', 'Fichiers formatés avec Prettier.', 'Erreur lors du formatage avec Prettier.')
+			'prettier --write --trailing-comma none --arrow-parens avoid --bracket-spacing --end-of-line crlf --single-quote --print-width 150 --use-tabs --tab-width 4 --no-semi .',
+			'Fichiers formatés avec Prettier.',
+			'Erreur lors du formatage avec Prettier.'
+		)
 		await runCommand('git add .', 'Fichiers ajoutés.', "Erreur lors de l'ajout des fichiers.")
 		await runCommand(`git commit -m "${commitMessage.trim()}"`, 'Commit effectué.', 'Erreur lors du commit.')
 	} catch (error) {
