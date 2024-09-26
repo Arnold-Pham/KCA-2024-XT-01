@@ -43,7 +43,7 @@ export default defineSchema(
 		member: defineTable({
 			serverId: v.id('server'),
 			userId: v.string(), //							ID de l'utilisateur
-			role: v.optional(v.string()) //					Rôle du membre (admin, modérateur, etc.)
+			role: v.optional(v.id('role')) //					Rôle du membre (admin, modérateur, etc.)
 		}),
 
 		// Salons textuels dans les serveurs

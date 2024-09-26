@@ -1,7 +1,7 @@
 {
 	"name": "kca-2024-xt-01",
 	"private": true,
-	"version": "0.0.7",
+	"version": "0.0.8",
 	"type": "module",
 	"scripts": {
 		"dev": "npm-run-all --parallel dev:frontend dev:backend",

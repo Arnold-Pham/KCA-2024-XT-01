@@ -26,6 +26,12 @@ export const c = mutation({
 				.first()
 			if (!member) return errors.memberNotFound
 
+			const channel = await ctx.db
+				.query('channel')
+				.filter(q => q.eq(q.field('serverId'), args.serverId))
+				.collect()
+			if (channel.length >= 32) return errors.tooMany
+
 			await ctx.db.insert('channel', {
 				serverId: args.serverId,
 				name: args.name.trim(),
@@ -86,7 +92,7 @@ export const u = mutation({
 		userId: v.string(),
 		name: v.optional(v.string()),
 		type: v.optional(v.string()),
-		permissions: v.optional(v.string()) //	Permissions spécifiques du canal (JSON string ou autre structure)
+		permissions: v.optional(v.string())
 	},
 	handler: async (ctx, args) => {
 		try {
@@ -199,6 +205,11 @@ const errors = {
 		status: 'error',
 		code: 400,
 		message: 'Message too long'
+	},
+	tooMany: {
+		status: 'error',
+		code: 400,
+		message: 'Too many channels'
 	},
 	unchanged: {
 		status: 'error',
