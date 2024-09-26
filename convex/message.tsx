@@ -11,6 +11,7 @@ export const c = mutation({
 	handler: async (ctx, args) => {
 		try {
 			if (!args.content || args.content.trim() === '') return errors.empty
+			if (args.content.trim().length > 3000) return errors.tooLong
 
 			const server = await ctx.db
 				.query('server')
@@ -72,6 +73,7 @@ export const l = query({
 				.first()
 			if (!channel) return errors.channelNotFound
 
+			// Ajouter de la pagination
 			const messages = await ctx.db
 				.query('message')
 				.filter(q => q.eq(q.field('channelId'), args.channelId))
@@ -96,6 +98,7 @@ export const u = mutation({
 	handler: async (ctx, args) => {
 		try {
 			if (!args.content || args.content.trim() === '') return errors.empty
+			if (args.content.trim().length > 3000) return errors.tooLong
 
 			const server = await ctx.db
 				.query('server')
@@ -219,6 +222,11 @@ const errors = {
 		code: 400,
 		message: 'Message sending refused',
 		details: "The message can't be empty"
+	},
+	tooLong: {
+		status: 'error',
+		code: 400,
+		message: 'Message too long'
 	},
 	unchanged: {
 		status: 'error',

@@ -4,19 +4,31 @@ import { v } from 'convex/values'
 export const c = mutation({
 	args: {
 		serverId: v.id('server'),
+		userId: v.string(),
 		name: v.string(),
-		order: v.number(),
 		type: v.optional(v.string()),
 		permissions: v.optional(v.string())
 	},
 	handler: async (ctx, args) => {
 		try {
 			if (!args.name || args.name.trim() === '') return errors.empty
+			if (args.name.trim().length > 32) return errors.tooLong
+
+			const server = await ctx.db
+				.query('server')
+				.filter(q => q.eq(q.field('_id'), args.serverId))
+				.first()
+			if (!server) return errors.serverNotFound
+
+			const member = await ctx.db
+				.query('member')
+				.filter(q => q.and(q.eq(q.field('userId'), args.userId), q.eq(q.field('serverId'), args.serverId)))
+				.first()
+			if (!member) return errors.memberNotFound
 
 			await ctx.db.insert('channel', {
 				serverId: args.serverId,
 				name: args.name.trim(),
-				order: 1,
 				type: 'text'
 			})
 
@@ -42,8 +54,13 @@ export const l = query({
 				.query('server')
 				.filter(q => q.eq(q.field('_id'), args.serverId))
 				.first()
+			if (!server) return errors.serverNotFound
 
-			if (!server) return errors.notFound
+			const member = await ctx.db
+				.query('member')
+				.filter(q => q.and(q.eq(q.field('userId'), args.userId), q.eq(q.field('serverId'), args.serverId)))
+				.first()
+			if (!member) return errors.memberNotFound
 
 			const channel = await ctx.db
 				.query('channel')
@@ -69,30 +86,34 @@ export const u = mutation({
 		userId: v.string(),
 		name: v.optional(v.string()),
 		type: v.optional(v.string()),
-		order: v.optional(v.number())
+		permissions: v.optional(v.string()) //	Permissions spécifiques du canal (JSON string ou autre structure)
 	},
 	handler: async (ctx, args) => {
 		try {
+			if (!args.name || args.name.trim() === '') return errors.empty
+			if (args.name.trim().length > 32) return errors.tooLong
+
 			const server = await ctx.db
 				.query('server')
 				.filter(q => q.eq(q.field('_id'), args.serverId))
 				.first()
-
-			if (!server) return errors.notFound
+			if (!server) return errors.serverNotFound
 
 			const channel = await ctx.db
 				.query('channel')
 				.filter(q => q.eq(q.field('_id'), args.channelId))
 				.first()
+			if (!channel) return errors.channelNotFound
 
-			if (!channel) return errors.notFound2
 			if (args.userId !== server.userId) return errors.notAuthorized
 			if (args.serverId !== channel.serverId) return errors.notAuthorized
 
+			// Modifier pour gérer voir chaque modifications
+			if (args.name.trim() === channel.name.trim()) return errors.unchanged
+
 			await ctx.db.patch(args.channelId, {
 				name: args.name,
-				type: args.type,
-				order: args.order
+				type: args.type
 			})
 
 			return {
@@ -118,24 +139,27 @@ export const d = mutation({
 				.query('server')
 				.filter(q => q.eq(q.field('_id'), args.serverId))
 				.first()
-
-			if (!server) return errors.notFound
+			if (!server) return errors.serverNotFound
 
 			const channel = await ctx.db
 				.query('channel')
 				.filter(q => q.eq(q.field('_id'), args.channelId))
 				.first()
+			if (!channel) return errors.channelNotFound
 
-			if (!channel) return errors.notFound2
-			if (args.userId !== server.userId) return errors.notAuthorized
-			if (args.serverId !== channel.serverId) return errors.notAuthorized
+			if (args.userId !== (server.userId || server.ownerId)) return errors.notAuthorized
 
+			const messages = await ctx.db
+				.query('message')
+				.filter(q => q.eq(q.field('channelId'), args.channelId))
+				.collect()
+			for (const message of messages) await ctx.db.delete(message._id)
 			await ctx.db.delete(args.channelId)
 
 			return {
 				status: 'success',
 				code: 200,
-				message: 'Channel deleted'
+				message: "Channel deleted and all it's messages too"
 			}
 		} catch (error: unknown) {
 			return handleError(error)
@@ -159,12 +183,6 @@ function handleError(error: unknown) {
 }
 
 const errors = {
-	deleted: {
-		status: 'error',
-		code: 400,
-		message: 'Message deletion refused',
-		details: 'The message has already been deleted'
-	},
 	empty: {
 		status: 'error',
 		code: 400,
@@ -177,13 +195,29 @@ const errors = {
 		message: 'Action refused',
 		details: "You don't have permission to modify this channel"
 	},
-	notFound: {
+	tooLong: {
+		status: 'error',
+		code: 400,
+		message: 'Message too long'
+	},
+	unchanged: {
+		status: 'error',
+		code: 400,
+		message: 'Message unchanged'
+	},
+	serverNotFound: {
 		status: 'error',
 		code: 404,
 		message: 'Server not found',
-		details: 'The specified server does not exist'
+		details: 'The specified Server does not exist'
 	},
-	notFound2: {
+	memberNotFound: {
+		status: 'error',
+		code: 404,
+		message: 'Member not found',
+		details: 'The specified member does not exist'
+	},
+	channelNotFound: {
 		status: 'error',
 		code: 404,
 		message: 'Channel not found',
