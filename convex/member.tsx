@@ -5,6 +5,7 @@ export const c = mutation({
 	args: {
 		serverId: v.id('server'),
 		userId: v.string(),
+		user: v.string(),
 		role: v.optional(v.id('role'))
 	},
 	handler: async (ctx, args) => {
@@ -18,6 +19,7 @@ export const c = mutation({
 			await ctx.db.insert('member', {
 				serverId: args.serverId,
 				userId: args.userId,
+				user: args.user,
 				role: args.role
 			})
 

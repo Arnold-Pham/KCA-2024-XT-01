@@ -45,10 +45,11 @@ export const c = mutation({
 	}
 })
 
-export const useCode = mutation({
+export const use = mutation({
 	args: {
 		code: v.string(),
-		userId: v.string()
+		userId: v.string(),
+		user: v.string()
 	},
 	handler: async (ctx, args) => {
 		try {
@@ -71,7 +72,8 @@ export const useCode = mutation({
 
 			await ctx.db.insert('member', {
 				serverId: serverId,
-				userId: args.userId
+				userId: args.userId,
+				user: args.user
 			})
 
 			await ctx.db.patch(invitCode._id, { uses: invitCode.uses + 1 })
