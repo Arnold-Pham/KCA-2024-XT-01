@@ -7,7 +7,7 @@ Voici une description de chaque fonction disponible et de son fonctionnement
 
 | Champ         | Type               | Description                                      |
 | ------------- | ------------------ | ------------------------------------------------ |
-| `serverId`    | `id('server')`     | ID du serveur auquel le salon appartient         |
+| `serverId`    | `id` ('server')    | ID du serveur auquel le salon appartient         |
 | `name`        | `string`           | Nom du salon                                     |
 | `type`        | `string`           | Type du salon (text, voice, etc.)                |
 | `permissions` | `string` ou `null` | Permissions spécifiques du salon, au format JSON |

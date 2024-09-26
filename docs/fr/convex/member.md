@@ -7,10 +7,10 @@ Voici une description de chaque fonction disponible et de son fonctionnement
 
 | Champ      | Type                   | Description                                     |
 | ---------- | ---------------------- | ----------------------------------------------- |
-| `serverId` | `id('server') `        | ID du serveur auquel le membre appartient       |
+| `serverId` | `id` ('server')        | ID du serveur auquel le membre appartient       |
 | `userId`   | `string  `             | ID de l'utilisateur                             |
 | `user`     | `string`               | Nom de l'utilisateur                            |
-| `role`     | `id('role')` ou `null` | ID du rôle attribué au membre, peut être `null` |
+| `role`     | `id` ('role')`ou`null` | ID du rôle attribué au membre, peut être `null` |
 
 ## Fonctionnalités
 

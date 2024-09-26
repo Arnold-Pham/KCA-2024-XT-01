@@ -7,7 +7,7 @@ Il permet de générer des codes uniques qui peuvent être utilisés pour rejoin
 
 | Champ       | Type               | Description                                              |
 | ----------- | ------------------ | -------------------------------------------------------- |
-| `serverId`  | `id ('server') `   | ID du serveur auquel le code d'invitation est lié        |
+| `serverId`  | `id` ('server')    | ID du serveur auquel le code d'invitation est lié        |
 | `creatorId` | `string`           | ID du créateur du code d'invitation                      |
 | `code`      | `string`           | Code d'invitation unique                                 |
 | `uses`      | `number`           | Nombre de fois que le code a été utilisé                 |

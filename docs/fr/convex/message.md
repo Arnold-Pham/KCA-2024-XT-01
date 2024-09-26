@@ -7,7 +7,7 @@ Voici une description de chaque fonction disponible et de son fonctionnement
 
 | Champ        | Type               | Description                                   |
 | ------------ | ------------------ | --------------------------------------------- |
-| `channelId`  | `id('channel')`    | ID du salon dans lequel le message est envoyé |
+| `channelId`  | `id` ('channel')   | ID du salon dans lequel le message est envoyé |
 | `userId`     | `string`           | ID de l'utilisateur ayant envoyé le message   |
 | `user`       | `string`           | Nom de l'utilisateur ayant envoyé le message  |
 | `content`    | `string`           | Contenu du message                            |

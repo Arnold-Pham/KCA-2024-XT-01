@@ -6,7 +6,7 @@ Cette documentation fournit un aperçu des tables et leurs schémas respectifs
 
 ## Tables de la Base de Données
 
-### 1. [Server]()
+### 1. Server
 
 Représente les serveurs de l'application
 Un serveur est créé par un utilisateur et peut contenir plusieurs canaux et membres
@@ -34,7 +34,7 @@ Chaque code a une limite d'utilisation et peut expirer
 | `maxUses`   | `number`        | (optionnel) Nombre maximum d'utilisations autorisées |
 | `expiresAt` | `number`        | (optionnel) Timestamp de l'expiration du code        |
 
-### 3. [Role]()
+### 3. Role
 
 Décrit les rôles associés à chaque serveur
 Les rôles ont des permissions spécifiques qui contrôlent les actions autorisées
@@ -98,11 +98,11 @@ Les messages peuvent être modifiés ou supprimés
 
 Pour plus de détails sur chaque table, cliquez sur les liens ci-dessous pour accéder à la documentation spécifique :
 
-Server
-[InvitCode](invitCode.md)
-Role
-[Member](member.md)
-[Channel](channel.md)
-[Message](message.md)
+-   Server
+-   [InvitCode](invitCode.md)
+-   Role
+-   [Member](member.md)
+-   [Channel](channel.md)
+-   [Message](message.md)
 
 Chaque documentation de table fournit des informations détaillées sur les champs, les contraintes, et les relations avec d'autres entités du schéma
