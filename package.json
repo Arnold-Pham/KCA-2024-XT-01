@@ -1,7 +1,7 @@
 {
 	"name": "kca-2024-xt-01",
 	"private": true,
-	"version": "0.0.12",
+	"version": "0.0.13",
 	"type": "module",
 	"scripts": {
 		"dev": "npm-run-all --parallel dev:frontend dev:backend",
@@ -12,10 +12,13 @@
 		"test:e2e": "cypress run",
 		"test:unit": "vitest",
 		"lint": "eslint",
-		"git": "node git.mjs"
+		"git": "node git.mjs",
+		"android": "cap add android",
+		"android:open": "cap open android"
 	},
 	"dependencies": {
 		"@auth0/auth0-react": "^2.2.4",
+		"@capacitor/android": "^6.1.2",
 		"@capacitor/app": "^6.0.1",
 		"@capacitor/browser": "^6.0.2",
 		"@capacitor/core": "6.1.2",
