@@ -4,12 +4,31 @@ import { v } from 'convex/values'
 export const c = mutation({
 	args: {
 		channelId: v.id('channel'),
+		serverId: v.id('server'),
 		userId: v.string(),
 		content: v.string()
 	},
 	handler: async (ctx, args) => {
 		try {
 			if (!args.content || args.content.trim() === '') return errors.empty
+
+			const server = await ctx.db
+				.query('server')
+				.filter(q => q.eq(q.field('_id'), args.serverId))
+				.first()
+			if (!server) return errors.serverNotFound
+
+			const member = await ctx.db
+				.query('member')
+				.filter(q => q.and(q.eq(q.field('userId'), args.userId), q.eq(q.field('serverId'), args.serverId)))
+				.first()
+			if (!member) return errors.memberNotFound
+
+			const channel = await ctx.db
+				.query('channel')
+				.filter(q => q.eq(q.field('_id'), args.channelId))
+				.first()
+			if (!channel) return errors.channelNotFound
 
 			await ctx.db.insert('message', {
 				channelId: args.channelId,
@@ -20,11 +39,7 @@ export const c = mutation({
 				deleted: false
 			})
 
-			return {
-				status: 'success',
-				code: 200,
-				message: 'Message sent'
-			}
+			return { status: 'success', code: 200, message: 'Message sent' }
 		} catch (error: unknown) {
 			return handleError(error)
 		}
@@ -33,29 +48,37 @@ export const c = mutation({
 
 export const l = query({
 	args: {
-		channelId: v.id('channel')
+		channelId: v.id('channel'),
+		serverId: v.id('server'),
+		userId: v.string()
 	},
 	handler: async (ctx, args) => {
 		try {
+			const server = await ctx.db
+				.query('server')
+				.filter(q => q.eq(q.field('_id'), args.serverId))
+				.first()
+			if (!server) return errors.serverNotFound
+
+			const member = await ctx.db
+				.query('member')
+				.filter(q => q.and(q.eq(q.field('userId'), args.userId), q.eq(q.field('serverId'), args.serverId)))
+				.first()
+			if (!member) return errors.memberNotFound
+
 			const channel = await ctx.db
 				.query('channel')
 				.filter(q => q.eq(q.field('_id'), args.channelId))
 				.first()
+			if (!channel) return errors.channelNotFound
 
-			if (!channel) return errors.notFound
-
-			const msgs = await ctx.db
+			const messages = await ctx.db
 				.query('message')
 				.filter(q => q.eq(q.field('channelId'), args.channelId))
 				.order('desc')
 				.take(50)
 
-			return {
-				status: 'success',
-				code: 200,
-				message: 'Messages collected',
-				data: msgs.reverse()
-			}
+			return { status: 'success', code: 200, message: 'Messages collected', data: messages.reverse() }
 		} catch (error: unknown) {
 			return handleError(error)
 		}
@@ -66,26 +89,41 @@ export const u = mutation({
 	args: {
 		messageId: v.id('message'),
 		channelId: v.id('channel'),
+		serverId: v.id('server'),
 		userId: v.string(),
 		content: v.string()
 	},
 	handler: async (ctx, args) => {
 		try {
+			if (!args.content || args.content.trim() === '') return errors.empty
+
+			const server = await ctx.db
+				.query('server')
+				.filter(q => q.eq(q.field('_id'), args.serverId))
+				.first()
+			if (!server) return errors.serverNotFound
+
+			const member = await ctx.db
+				.query('member')
+				.filter(q => q.and(q.eq(q.field('userId'), args.userId), q.eq(q.field('serverId'), args.serverId)))
+				.first()
+			if (!member) return errors.memberNotFound
+
 			const channel = await ctx.db
 				.query('channel')
 				.filter(q => q.eq(q.field('_id'), args.channelId))
 				.first()
+			if (!channel) return errors.channelNotFound
 
-			if (!channel) return errors.notFound
-
-			const msg = await ctx.db
+			const message = await ctx.db
 				.query('message')
 				.filter(q => q.eq(q.field('_id'), args.messageId))
 				.first()
+			if (!message) return errors.messageNotFound
 
-			if (!msg) return errors.notFound2
-			if (args.userId !== msg.userId) return errors.notAuthor
-			if (args.channelId !== msg.channelId) return errors.notAuthorized
+			if (message.deleted) return errors.deleted
+			if (args.userId !== message.userId) return errors.notAuthorized
+			if (args.content.trim() === message.content.trim()) return errors.unchanged
 
 			await ctx.db.patch(args.messageId, {
 				content: args.content,
@@ -93,11 +131,7 @@ export const u = mutation({
 				modifiedAt: Date.now()
 			})
 
-			return {
-				status: 'success',
-				code: 200,
-				message: 'Message updated'
-			}
+			return { status: 'success', code: 200, message: 'Message updated' }
 		} catch (error: unknown) {
 			return handleError(error)
 		}
@@ -108,30 +142,41 @@ export const d = mutation({
 	args: {
 		messageId: v.id('message'),
 		channelId: v.id('channel'),
+		serverId: v.id('server'),
 		userId: v.string()
 	},
 	handler: async (ctx, args) => {
 		try {
+			const server = await ctx.db
+				.query('server')
+				.filter(q => q.eq(q.field('_id'), args.serverId))
+				.first()
+			if (!server) return errors.serverNotFound
+
+			const member = await ctx.db
+				.query('member')
+				.filter(q => q.and(q.eq(q.field('userId'), args.userId), q.eq(q.field('serverId'), args.serverId)))
+				.first()
+			if (!member) return errors.memberNotFound
+
 			const channel = await ctx.db
 				.query('channel')
 				.filter(q => q.eq(q.field('_id'), args.channelId))
 				.first()
+			if (!channel) return errors.channelNotFound
 
-			if (!channel) return errors.notFound
-
-			const msg = await ctx.db
+			const message = await ctx.db
 				.query('message')
 				.filter(q => q.eq(q.field('_id'), args.messageId))
 				.first()
+			if (!message) return errors.messageNotFound
 
-			if (!msg) return errors.notFound
-			if (msg.deleted) return errors.deleted
-			if (args.userId !== msg.userId) return errors.notAuthor
-			if (args.channelId !== msg.channelId) return errors.notAuthorized
+			if (message.deleted) return errors.deleted
 
-			// TBD
+			// À modifier pour autoriser la modération
+			if (args.userId !== message.userId) return errors.notAuthorized
+
 			await ctx.db.patch(args.messageId, {
-				content: '',
 				modifiedAt: Date.now(),
 				deleted: true
 			})
@@ -166,34 +211,45 @@ const errors = {
 	deleted: {
 		status: 'error',
 		code: 400,
-		message: 'Message deletion refused',
+		message: 'Action refused',
 		details: 'The message has already been deleted'
 	},
 	empty: {
 		status: 'error',
 		code: 400,
 		message: 'Message sending refused',
-		details: 'The content of the message is empty'
+		details: "The message can't be empty"
 	},
-	notAuthor: {
+	unchanged: {
 		status: 'error',
-		code: 403,
-		message: 'Action refused',
-		details: 'You are not the author of this message'
+		code: 400,
+		message: 'Message unchanged'
 	},
 	notAuthorized: {
 		status: 'error',
 		code: 403,
 		message: 'Action refused',
-		details: "You don't have permission to modify this message"
+		details: "You don't have enough permissions to do that"
 	},
-	notFound: {
+	serverNotFound: {
+		status: 'error',
+		code: 404,
+		message: 'Server not found',
+		details: 'The specified Server does not exist'
+	},
+	memberNotFound: {
+		status: 'error',
+		code: 404,
+		message: 'Member not found',
+		details: 'The specified member does not exist'
+	},
+	channelNotFound: {
 		status: 'error',
 		code: 404,
 		message: 'Channel not found',
 		details: 'The specified channel does not exist'
 	},
-	notFound2: {
+	messageNotFound: {
 		status: 'error',
 		code: 404,
 		message: 'Message not found',

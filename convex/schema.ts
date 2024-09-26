@@ -8,6 +8,8 @@ export default defineSchema(
 			userId: v.string(), //					ID du créateur du serveur
 			user: v.string(), //					Nom d'utilisateur du créateur
 			name: v.string(), //					Nom du serveur
+			ownerId: v.optional(v.string()), //		ID du propriétaire du serveur
+			owner: v.optional(v.string()), //		Nom d'utilisateur du propriétaire
 			description: v.optional(v.string()) //	Description optionnelle du serveur
 		}),
 
@@ -32,6 +34,7 @@ export default defineSchema(
 		channel: defineTable({
 			serverId: v.id('server'),
 			name: v.string(), //					Nom du canal
+			order: v.number(), //					Ordre d'affichage des salons
 			type: v.optional(v.string()), //		Type du canal (texte, vocal, etc.)
 			permissions: v.optional(v.string()) //	Permissions spécifiques du canal (JSON string ou autre structure)
 		}),
