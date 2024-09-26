@@ -1,5 +1,7 @@
 # PROJECT KCA-2024-XT-01
 
+[Français](../fr/README.md) | [English](README.md)
+
 ## Description
 
 Welcome to the **KCA-2024-XT-01** project, an innovative chat application designed to revolutionize user communication by integrating multiple systems and modern technologies. This project is developed using **React Js** and utilizes a robust architecture to ensure high performance, enhanced security, and a smooth user experience across different platforms.
@@ -9,7 +11,7 @@ The application provides enriched communication with advanced features such as f
 ## Technologies Used
 
 -   **React Js**: For building the dynamic and responsive user interface
--   **Convex**: As a database for real-time data management, enabling instant updates in the user interface
+-   [**Convex**](convex/README.md): As a database for real-time data management, enabling instant updates in the user interface
 -   **Auth0**: For user authentication management, providing secure login and account management features
 -   **Ionic**: For deploying the application on various mobile devices and platforms, ensuring a consistent user experience
 

@@ -1,5 +1,7 @@
 # Documentation Générale de la Base de Données
 
+[Français](README.md) | [English](../../en/convex/README.md)
+
 Ce projet utilise un schéma de base de données conçu pour gérer un système de serveurs, de membres, de rôles, de canaux, de messages et de codes d'invitation
 Chaque table est définie avec des champs spécifiques et des relations claires entre les entités
 Cette documentation fournit un aperçu des tables et leurs schémas respectifs
