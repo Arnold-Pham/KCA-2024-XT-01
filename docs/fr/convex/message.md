@@ -229,19 +229,19 @@ function handleError(error: unknown)
 -   Si c'est le cas, elle lève une nouvelle erreur avec les détails de l'erreur d'origine, en utilisant le format suivant:
     ```javascript
     {
-      status: 'error',
-      code: 500,
-      message: 'SERVER_ERROR',
-      details: 'Détails de l'erreur capturée'
+        status: 'error',
+        code: 500,
+        message: 'SERVER_ERROR',
+        details: error.message || 'Server Error'
     }
     ```
 -   Si ce n'est pas une instance de `Error`, elle renvoie un objet d'erreur générique:
     ```javascript
     {
-      status: 'error',
-      code: 500,
-      message: 'UNKNOWN_ERROR',
-      details: 'Représentation chaîne de caractères de l'erreur capturée'
+        status: 'error',
+        code: 500,
+        message: 'UNKNOWN_ERROR',
+        details: String(error)
     }
     ```
 -   La fonction relance toujours une erreur (`throw`), ce qui signifie qu'elle interrompt le flux d'exécution normal
