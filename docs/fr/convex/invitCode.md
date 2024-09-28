@@ -1,54 +1,70 @@
-# Gestion des Codes d'Invitation
+# Documentation - Gestion des Codes d'Invitation
 
-Le module `invitCode` gère la création et l'utilisation des codes d'invitation pour les serveurs
-Il permet de générer des codes uniques qui peuvent être utilisés pour rejoindre un serveur
+Le module `invitCode` gère la création, l'utilisation et la gestion des codes d'invitation pour permettre aux utilisateurs de rejoindre des serveurs
+Cette documentation décrit le fonctionnement de chaque fonction disponible dans le CRUD (Create, Read, Update, Delete) pour la table `invitCode`
 
-## Table
+## Table `invitCode`
 
-| Champ       | Type               | Description                                              |
-| ----------- | ------------------ | -------------------------------------------------------- |
-| `serverId`  | `id` ('server')    | ID du serveur auquel le code d'invitation est lié        |
-| `creatorId` | `string`           | ID du créateur du code d'invitation                      |
-| `code`      | `string`           | Code d'invitation unique                                 |
-| `uses`      | `number`           | Nombre de fois que le code a été utilisé                 |
-| `maxUses`   | `number` ou `null` | Limite maximale d'utilisation du code (peut être `null`) |
-| `expiresAt` | `number` ou `null` | Timestamp de l'expiration du code (peut être `null`)     |
+### Structure
 
-## Fonctionnalités
+| Champ       | Type            | Description                                            |
+| ----------- | --------------- | ------------------------------------------------------ |
+| `serverId`  | `id('server')`  | Identifiant du serveur pour lequel le code est généré  |
+| `creatorId` | `string`        | Identifiant de l'utilisateur ayant créé le code        |
+| `code`      | `string`        | Code d'invitation unique généré aléatoirement          |
+| `uses`      | `number`        | Nombre actuel d'utilisations du code                   |
+| `maxUses`   | `number`/`null` | _(optionnel)_ Nombre maximal d'utilisations autorisées |
+| `expiresAt` | `number`/`null` | _(optionnel)_ Timestamp d'expiration du code           |
 
-### 1. `c` - Création d'un Code d'Invitation (Create)
+### Règles de validation
+
+-   **Code**:
+    -   Doit être unique. Un code généré est vérifié pour s'assurer qu'il n'existe pas déjà dans la base de données
+-   **Utilisations**:
+    -   Doit être un entier positif
+-   **Nombre maximal d'utilisations**:
+    -   Optionnel, si spécifié, doit être un entier positif
+-   **Expiration**:
+    -   Optionnel, si spécifié, doit être un timestamp futur
+
+---
+
+## Fonctionnalités CRUD
+
+### 1. `c` - Création d'un Code d'Invitation _(Create)_
 
 #### Description
 
-Génère un nouveau code d'invitation pour un serveur spécifié
+Crée un nouveau code d'invitation pour un serveur spécifié
 
 #### Arguments
 
--   `serverId`: Identifiant du serveur pour lequel le code d'invitation est généré
--   `creatorId`: Identifiant de l'utilisateur créant le code
--   `maxUses`: (Optionnel) Limite du nombre d'utilisations du code. Par défaut, aucune limite
--   `expiresAt`: (Optionnel) Timestamp de l'expiration du code. Par défaut, pas de date d'expiration
+-   `serverId`: `id('server')` - Identifiant du serveur pour lequel le code doit être généré
+-   `creatorId`: `string` - Identifiant de l'utilisateur créant le code
+-   `maxUses`: `number` _(facultatif)_ - Nombre maximal d'utilisations du code. Si non spécifié, le code peut être utilisé un nombre illimité de fois
+-   `expiresAt`: `number` _(facultatif)_ - Timestamp d'expiration du code. Si non spécifié, le code n'expire pas
 
 #### Comportement
 
--   Génération de Code:
-    -   Utilise la fonction `generateCode` pour créer un code unique de 12 caractères (par défaut)
-    -   Le code est vérifié pour s'assurer qu'il n'existe pas déjà dans la base de données
--   Insertion dans la Base de Données:
-    -   Le code généré est stocké dans la table invitCode avec les informations fournies:
-        -   `serverId`, `creatorId`: Données fournies par le frontend
-        -   `code`: Code généré de manière unique
-        -   `uses`: Initialisé à 0
-        -   `maxUses`: Peut être `null` ou le nombre maximal d'utilisations
-        -   `expiresAt`: Peut être `null` ou le timestamp d'expiration
+-   **Validation**:
+    -   Vérifie que le serveur et le créateur existent
+    -   Vérifie que le créateur possède les permissions pour générer des invitations pour ce serveur
+-   **Génération**:
+    -   Génère un code unique aléatoire de 12 caractères
+    -   Vérifie que le code généré n'existe pas déjà
+-   **Insertion**:
+    -   Insère le code généré dans la base de données avec les informations fournies
 
 #### Réponses
 
 -   **Success**: `{ status: 'success', code: 200, message: 'Code created', data: codeGen }`
 -   **Errors**:
-    -   `errors.serverNotFound`: Le serveur spécifié n'existe pas
+    -   `errors.serverNotFound`: Serveur non trouvé
+    -   `errors.permissionDenied`: Permissions insuffisantes pour créer un code
 
-### 2. `use` - Utilisation d'un Code d'Invitation (Use)
+---
+
+### 2. `use` - Utilisation d'un Code d'Invitation
 
 #### Description
 
@@ -56,44 +72,43 @@ Permet à un utilisateur d'utiliser un code d'invitation pour rejoindre un serve
 
 #### Arguments
 
-`code`: Code d'invitation à utiliser
-`userId`: Identifiant de l'utilisateur qui utilise le code
-`user`: Nom de l'utilisateur
+-   `code`: `string` - Code d'invitation à utiliser
+-   `userId`: `id('user')` - Identifiant de l'utilisateur utilisant le code
 
 #### Comportement
 
--   Vérification du Code:
-    -   Le code d'invitation est recherché dans la table `invitCode`
-    -   Si le code n'existe pas, retourne l'erreur `errors.invalid`
-    -   Si le code a expiré, retourne l'erreur `errors.expired`
-    -   Si le nombre maximal d'utilisations est atteint, retourne l'erreur `errors.maxUsed`
--   Vérification du Serveur:
+-   **Validation**:
+    -   Vérifie que le code existe
+    -   Vérifie que le code n'a pas expiré
+    -   Vérifie que le nombre maximal d'utilisations n'a pas été atteint
+-   **Vérification du Serveur**:
     -   Vérifie que le serveur associé au code existe
-    -   Si le serveur n'existe pas, retourne l'erreur `errors.serverNotFound`
--   Ajout du Membre:
-    -   L'utilisateur est ajouté en tant que membre du serveur dans la table `member`
-    -   Le compteur `uses` du code d'invitation est incrémenté de 1
--   Mise à jour du Code:
-    -   Incrémente le champ `uses` du code d'invitation
+-   **Ajout de Membre**:
+    -   Ajoute l'utilisateur en tant que membre du serveur
+-   **Mise à jour du Code**:
+    -   Incrémente le nombre d'utilisations du code
 
 #### Réponses
 
 -   **Success**: `{ status: 'success', code: 200, message: 'Code used' }`
 -   **Errors**:
-    -   `errors.invalid`: Le code d'invitation n'est pas valide
-    -   `errors.maxUsed`: La limite d'utilisation du code est atteinte
-    -   `errors.serverNotFound`: Le serveur spécifié n'existe pas
-    -   `errors.expired`: Le code a expiré
+    -   `errors.invalid`: Code d'invitation inconnu
+    -   `errors.expired`: Code expiré
+    -   `errors.maxUsed`: Nombre maximal d'utilisations atteint
+    -   `errors.serverNotFound`: Serveur non trouvé
+
+---
 
 ## Gestion des Erreurs
 
 Les fonctions utilisent un objet d'erreurs standardisé pour renvoyer des réponses cohérentes:
 
-| Code d'Erreur           | Statut | Message                    | Détails supplémentaires                      |
-| ----------------------- | ------ | -------------------------- | -------------------------------------------- |
-| `errors.invalid`        | 404    | "Unknown code"             | Le code d'invitation est inconnu             |
-| `errors.maxUsed`        | 400    | "Code usage limit reached" | La limite d'utilisation du code est atteinte |
-| `errors.serverNotFound` | 404    | "Server not found"         | Le serveur spécifié n'existe pas             |
-| `errors.expired`        | 400    | "Code expired"             | Le code a expiré                             |
+| Code d'Erreur             | Statut | Message                  | Détails supplémentaires                               |
+| ------------------------- | ------ | ------------------------ | ----------------------------------------------------- |
+| `errors.invalid`          | 404    | Unknown code             | Le code d'invitation spécifié n'existe pas            |
+| `errors.expired`          | 400    | Code expired             | Le code d'invitation a expiré et ne peut être utilisé |
+| `errors.maxUsed`          | 400    | Code usage limit reached | Le code a atteint le nombre maximal d'utilisations    |
+| `errors.serverNotFound`   | 404    | Server not found         | Le serveur associé au code n'existe pas               |
+| `errors.permissionDenied` | 403    | Permission denied        | L'utilisateur n'a pas les permissions nécessaires     |
 
-Les réponses d'erreur incluent toujours un statut HTTP (`code`) et un message d'erreur clair pour faciliter le débogage et la compréhension du problème.
+Les réponses d'erreur incluent toujours un statut HTTP (`code`) et un message d'erreur clair pour faciliter le débogage et la compréhension du problème

@@ -7,7 +7,7 @@ interface ErrorRouteProps extends RouteProps {
 	component: React.ComponentType<{ code: ErrorCode }>
 }
 
-const ErrorRoute: React.FC<ErrorRouteProps> = ({ component: Component, ...rest }) => {
+export default function ErrorRoute({ component: Component, ...rest }: ErrorRouteProps) {
 	return (
 		<Route
 			{...rest}
@@ -23,5 +23,3 @@ const ErrorRoute: React.FC<ErrorRouteProps> = ({ component: Component, ...rest }
 		/>
 	)
 }
-
-export default ErrorRoute

@@ -5,8 +5,7 @@ export const c = mutation({
 	args: {
 		channelId: v.id('channel'),
 		serverId: v.id('server'),
-		userId: v.string(),
-		user: v.string(),
+		userId: v.id('user'),
 		content: v.string()
 	},
 	handler: async (ctx, args) => {
@@ -35,7 +34,6 @@ export const c = mutation({
 			await ctx.db.insert('message', {
 				channelId: args.channelId,
 				userId: args.userId,
-				user: args.user,
 				content: args.content.trim(),
 				modified: false,
 				modifiedAt: null,

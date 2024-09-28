@@ -3,9 +3,13 @@ import { v } from 'convex/values'
 
 export default defineSchema(
 	{
-		server: defineTable({
+		user: defineTable({
 			userId: v.string(),
-			user: v.string(),
+			userName: v.string(),
+			picture: v.string()
+		}),
+		server: defineTable({
+			userId: v.id('user'),
 			name: v.string(),
 			ownerId: v.optional(v.string()),
 			owner: v.optional(v.string()),
@@ -34,8 +38,7 @@ export default defineSchema(
 		}),
 		member: defineTable({
 			serverId: v.id('server'),
-			userId: v.string(),
-			user: v.string(),
+			userId: v.id('user'),
 			role: v.optional(v.id('role'))
 		}),
 		channel: defineTable({
@@ -46,8 +49,7 @@ export default defineSchema(
 		}),
 		message: defineTable({
 			channelId: v.id('channel'),
-			userId: v.string(),
-			user: v.string(),
+			userId: v.id('user'),
 			content: v.string(),
 			modified: v.boolean(),
 			modifiedAt: v.union(v.number(), v.null()),

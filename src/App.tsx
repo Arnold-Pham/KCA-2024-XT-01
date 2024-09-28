@@ -1,4 +1,4 @@
-import { IonApp, IonRouterOutlet, IonSplitPane, setupIonicReact } from '@ionic/react'
+import { IonApp, setupIonicReact } from '@ionic/react'
 import { IonReactRouter } from '@ionic/react-router'
 import { App as CapApp } from '@capacitor/app'
 import { useAuth0 } from '@auth0/auth0-react'
@@ -8,7 +8,6 @@ import { useEffect } from 'react'
 
 import ErrorHandler from './errors/ErrorHandler'
 import ErrorRoute from './errors/ErrorRoute'
-import Menu from './components/Menu'
 import Home from './pages/Home'
 
 /* Core CSS required for Ionic components to work properly */
@@ -43,8 +42,8 @@ import './theme/variables.css'
 
 setupIonicReact()
 
-const App: React.FC = () => {
-	const { handleRedirectCallback, isAuthenticated } = useAuth0()
+export default function App() {
+	const { handleRedirectCallback } = useAuth0()
 
 	useEffect(() => {
 		CapApp.addListener('appUrlOpen', async ({ url }) => {
@@ -56,16 +55,10 @@ const App: React.FC = () => {
 	return (
 		<IonApp>
 			<IonReactRouter>
-				<IonSplitPane contentId="main">
-					{isAuthenticated && <Menu />}
-					<IonRouterOutlet id="main">
-						<Route path="/" exact component={Home} />
-						<ErrorRoute path="/e/:code" exact component={ErrorHandler} />
-					</IonRouterOutlet>
-				</IonSplitPane>
+				<Route path="/" exact component={Home} />
+				<Route path="/g/:name" exact component={Home} />
+				<ErrorRoute path="/e/:code" exact component={ErrorHandler} />
 			</IonReactRouter>
 		</IonApp>
 	)
 }
-
-export default App
