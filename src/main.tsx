@@ -1,4 +1,5 @@
 import { ConvexProviderWithAuth0 } from 'convex/react-auth0'
+import { UserProvider } from './utils/UserProvider'
 import { Auth0Provider } from '@auth0/auth0-react'
 import { ConvexReactClient } from 'convex/react'
 import ReactDOM from 'react-dom/client'
@@ -17,7 +18,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 			cacheLocation="localstorage"
 		>
 			<ConvexProviderWithAuth0 client={convex}>
-				<App />
+				<UserProvider>
+					<App />
+				</UserProvider>
 			</ConvexProviderWithAuth0>
 		</Auth0Provider>
 	</React.StrictMode>

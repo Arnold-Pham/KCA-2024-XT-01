@@ -1,5 +1,5 @@
 import { mutation, query, MutationCtx, QueryCtx } from './_generated/server'
-import { Id } from './_generated/dataModel'
+import { Doc, Id } from './_generated/dataModel'
 import { v } from 'convex/values'
 
 export const c = mutation({
@@ -10,18 +10,17 @@ export const c = mutation({
 		content: v.string()
 	},
 
-	handler: async (ctx, args) => {
+	handler: async (ctx, { userId, serverId, channelId, content }) => {
 		try {
-			if (!args.content || args.content.trim() === '') return error.messageEmpty
-			if (args.content.trim().length > 3000) return error.messageTooLong
-
-			const validationError = await verifyUserServerChannel(ctx, args)
+			if (!content || content.trim() === '') return
+			if (content.trim().length > 3000) return
+			const validationError = await verifyUserServerChannel(ctx, { userId, serverId, channelId })
 			if (validationError) return validationError
 
 			await ctx.db.insert('message', {
-				channelId: args.channelId,
-				userId: args.userId,
-				content: args.content.trim(),
+				channelId,
+				userId,
+				content: content.trim(),
 				modified: false,
 				modifiedAt: null,
 				deleted: false
@@ -50,7 +49,7 @@ export const l = query({
 		try {
 			const validationError = await verifyUserServerChannel(ctx, args)
 			if (validationError) return validationError
-			const messagesWithName = []
+			const messagesWithName: (Doc<'message'> & { username?: string; picture?: string })[] = []
 
 			const messages = await ctx.db
 				.query('message')
@@ -58,24 +57,21 @@ export const l = query({
 				.order('desc')
 				.take(50)
 
-			for (const message of messages) {
-				const user = await ctx.db
-					.query('user')
-					.filter(q => q.eq(q.field('_id'), message.userId))
-					.first()
-
-				messagesWithName.push({
-					...message,
-					username: user?.username,
-					picture: user?.picture
+			await Promise.all(
+				messages.map(async message => {
+					const user = await ctx.db.get(message.userId)
+					messagesWithName.push({
+						...message,
+						username: user?.username,
+						picture: user?.picture
+					})
 				})
-			}
-
+			)
 			return {
 				status: 'success',
 				code: 200,
 				message: 'MESSAGES_GATHERED',
-				details: 'Les cinquante derniers messages ont été récupérés',
+				details: 'Les cinquante derniers messages ont été récupérés avec les informations utilisateur',
 				data: messagesWithName.reverse()
 			}
 		} catch (error: unknown) {
@@ -93,26 +89,20 @@ export const u = mutation({
 		content: v.string()
 	},
 
-	handler: async (ctx, args) => {
+	handler: async (ctx, { userId, serverId, channelId, messageId, content }) => {
 		try {
-			if (!args.content || args.content.trim() === '') return error.messageEmpty
-			if (args.content.trim().length > 3000) return error.messageTooLong
-
-			const validationError = await verifyUserServerChannel(ctx, args)
+			if (!content || content.trim() === '') return
+			if (content.trim().length > 3000) return
+			const validationError = await verifyUserServerChannel(ctx, { userId, serverId, channelId })
 			if (validationError) return validationError
+			const message = await ctx.db.get(messageId)
+			if (!message) return
+			if (message.deleted) return
+			if (userId !== message.userId) return
+			if (content.trim() === message.content) return
 
-			const message = await ctx.db
-				.query('message')
-				.filter(q => q.eq(q.field('_id'), args.messageId))
-				.first()
-			if (!message) return error.unknownMessage
-
-			if (message.deleted) return error.messageDeleted
-			if (args.userId !== message.userId) return error.messageNotAuthor
-			if (args.content.trim() === message.content) return error.messageUnchanged
-
-			await ctx.db.patch(args.messageId, {
-				content: args.content,
+			await ctx.db.patch(messageId, {
+				content: content.trim(),
 				modified: true,
 				modifiedAt: Date.now()
 			})
@@ -141,15 +131,10 @@ export const d = mutation({
 		try {
 			const validationError = await verifyUserServerChannel(ctx, args)
 			if (validationError) return validationError
-
-			const message = await ctx.db
-				.query('message')
-				.filter(q => q.eq(q.field('_id'), args.messageId))
-				.first()
-			if (!message) return error.unknownMessage
-
-			if (message.deleted) return error.messageDeleted
-			if (args.userId !== message.userId) return error.messageNotAuthor
+			const message = await ctx.db.get(args.messageId)
+			if (!message) return
+			if (message.deleted) return
+			if (args.userId !== message.userId) return
 
 			await ctx.db.patch(args.messageId, {
 				modifiedAt: Date.now(),
@@ -188,92 +173,19 @@ async function verifyUserServerChannel(
 	ctx: MutationCtx | QueryCtx,
 	{ userId, serverId, channelId }: { userId: Id<'user'>; serverId: Id<'server'>; channelId: Id<'channel'> }
 ) {
-	const user = await ctx.db
-		.query('user')
-		.filter(q => q.eq(q.field('_id'), userId))
-		.first()
-	if (!user) return error.unknownUser
-
-	const server = await ctx.db
-		.query('server')
-		.filter(q => q.eq(q.field('_id'), serverId))
-		.first()
-	if (!server) return error.unknownServer
+	const user = await ctx.db.get(userId)
+	if (!user) return
+	const server = await ctx.db.get(serverId)
+	if (!server) return
 
 	const member = await ctx.db
 		.query('member')
 		.filter(q => q.and(q.eq(q.field('userId'), userId), q.eq(q.field('serverId'), serverId)))
 		.first()
-	if (!member) return error.unknownMember
+	if (!member) return
 
-	const channel = await ctx.db
-		.query('channel')
-		.filter(q => q.eq(q.field('_id'), channelId))
-		.first()
-	if (!channel) return error.unknownChannel
+	const channel = await ctx.db.get(channelId)
+	if (!channel) return
 
 	return null
-}
-
-const error = {
-	unknownUser: {
-		status: 'error',
-		code: 404,
-		message: 'UNKNOWN_USER',
-		details: 'The specified user could not be found in the database'
-	},
-	unknownServer: {
-		status: 'error',
-		code: 404,
-		message: 'UNKNOWN_SERVER',
-		details: 'The specified server could not be found in the list of available servers'
-	},
-	unknownMember: {
-		status: 'error',
-		code: 404,
-		message: 'UNKNOWN_MEMBER',
-		details: 'The specified member is not part of the server'
-	},
-	unknownChannel: {
-		status: 'error',
-		code: 404,
-		message: 'UNKNOWN_CHANNEL',
-		details: 'The specified channel could not be found in the server'
-	},
-	unknownMessage: {
-		status: 'error',
-		code: 404,
-		message: 'UNKNOWN_MESSAGE',
-		details: 'The specified message could not be found in the channel'
-	},
-	messageEmpty: {
-		status: 'error',
-		code: 400,
-		message: 'MESSAGE_EMPTY',
-		details: 'The message content must contain at least one character'
-	},
-	messageTooLong: {
-		status: 'error',
-		code: 400,
-		message: 'MESSAGE_TOO_LONG',
-		details: 'The message exceeds the allowed character limit'
-	},
-	messageDeleted: {
-		status: 'error',
-		code: 410,
-		message: 'MESSAGE_DELETED',
-		details: 'The specified message has already been deleted and is no longer available'
-	},
-	messageNotAuthor: {
-		status: 'error',
-		code: 403,
-		message: 'MESSAGE_NOT_AUTHOR',
-		details: 'Only the author of the message can perform this action'
-	},
-	messageUnchanged: {
-		status: 'error',
-		code: 400,
-		message: 'MESSAGE_UNCHANGED',
-		details: 'The new message content must be different from the original'
-	}
 }

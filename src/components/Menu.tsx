@@ -67,7 +67,7 @@ const appPages: AppPage[] = [
 export default function Menu() {
 	const location = useLocation()
 	const { user } = useAuth0()
-	console.log(user)
+	console.log(user?.sub)
 
 	return (
 		<IonMenu contentId="main" type="overlay">

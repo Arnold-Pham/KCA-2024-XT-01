@@ -19,26 +19,36 @@ const generateCode = async (ctx: MutationCtx, length: number = 12): Promise<stri
 
 export const c = mutation({
 	args: {
+		creatorId: v.id('user'),
 		serverId: v.id('server'),
-		creatorId: v.string(),
 		maxUses: v.optional(v.number()),
 		expiresAt: v.optional(v.number())
 	},
-	handler: async (ctx, args) => {
+	handler: async (ctx, { creatorId, serverId, maxUses, expiresAt }) => {
 		try {
-			// Ajouter vérifications permission invitations
+			const user = await ctx.db.get(creatorId)
+			if (!user) return
+			const server = await ctx.db.get(serverId)
+			if (!server) return
+
 			const codeGen = await generateCode(ctx)
 
 			await ctx.db.insert('invitCode', {
-				serverId: args.serverId,
-				creatorId: args.creatorId,
+				serverId: serverId,
+				creatorId: creatorId,
 				code: codeGen,
 				uses: 0,
-				maxUses: args.maxUses,
-				expiresAt: args.expiresAt
+				maxUses: maxUses,
+				expiresAt: expiresAt
 			})
 
-			return { status: 'success', code: 200, message: 'Code created', data: codeGen }
+			return {
+				status: 'success',
+				code: 200,
+				message: 'CODE_CREATED',
+				details: "Le code d'invitation a bien été créé",
+				data: codeGen
+			}
 		} catch (error: unknown) {
 			return handleError(error)
 		}
@@ -56,18 +66,18 @@ export const use = mutation({
 				.query('invitCode')
 				.filter(q => q.eq(q.field('code'), args.code))
 				.first()
-			if (!invitCode) return errors.invalid
+			if (!invitCode) return
 
 			const { serverId, maxUses, uses, expiresAt } = invitCode
 
-			if (expiresAt !== undefined && expiresAt < Date.now()) return errors.expired
-			if (maxUses !== undefined && maxUses > 0 && uses >= maxUses) return errors.maxUsed
+			if (expiresAt !== undefined && expiresAt < Date.now()) return
+			if (maxUses !== undefined && maxUses > 0 && uses >= maxUses) return
 
 			const server = await ctx.db
 				.query('server')
 				.filter(q => q.eq(q.field('_id'), serverId))
 				.first()
-			if (!server) return errors.serverNotFound
+			if (!server) return
 
 			await ctx.db.insert('member', {
 				serverId: serverId,
@@ -76,7 +86,12 @@ export const use = mutation({
 
 			await ctx.db.patch(invitCode._id, { uses: invitCode.uses + 1 })
 
-			return { status: 'success', code: 200, message: 'Code used' }
+			return {
+				status: 'success',
+				code: 200,
+				message: 'CODE_USED',
+				details: "Le code d'invitation a bien été utilisé"
+			}
 		} catch (error: unknown) {
 			return handleError(error)
 		}
@@ -96,28 +111,4 @@ function handleError(error: unknown) {
 				message: 'Unknown Error',
 				details: String(error)
 			}
-}
-
-const errors = {
-	invalid: {
-		status: 'error',
-		code: 404,
-		message: 'Unknown code'
-	},
-	maxUsed: {
-		status: 'error',
-		code: 400,
-		message: 'Code usage limit reached'
-	},
-	serverNotFound: {
-		status: 'error',
-		code: 404,
-		message: 'Server not found',
-		details: 'The specified Server does not exist'
-	},
-	expired: {
-		status: 'error',
-		code: 400,
-		message: 'Code expired'
-	}
 }

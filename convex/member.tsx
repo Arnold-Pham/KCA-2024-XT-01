@@ -3,28 +3,26 @@ import { v } from 'convex/values'
 
 export const c = mutation({
 	args: {
-		serverId: v.id('server'),
 		userId: v.id('user'),
-		role: v.optional(v.id('role'))
+		serverId: v.id('server')
 	},
-	handler: async (ctx, args) => {
+	handler: async (ctx, { userId, serverId }) => {
 		try {
-			const server = await ctx.db
-				.query('server')
-				.filter(q => q.eq(q.field('_id'), args.serverId))
-				.first()
-			if (!server) return errors.serverNotFound
+			const user = await ctx.db.get(userId)
+			if (!user) return
+			const server = await ctx.db.get(serverId)
+			if (!server) return
 
 			await ctx.db.insert('member', {
-				serverId: args.serverId,
-				userId: args.userId,
-				role: args.role
+				serverId: serverId,
+				userId: userId
 			})
 
 			return {
 				status: 'success',
 				code: 200,
-				message: 'Member added'
+				message: 'MEMBER_ADDED',
+				details: "L'utilisateur a bien été ajouté en tant que membre du serveur"
 			}
 		} catch (error: unknown) {
 			return handleError(error)
@@ -36,23 +34,21 @@ export const l = query({
 	args: {
 		serverId: v.id('server')
 	},
-	handler: async (ctx, args) => {
+	handler: async (ctx, { serverId }) => {
 		try {
-			const server = await ctx.db
-				.query('server')
-				.filter(q => q.eq(q.field('_id'), args.serverId))
-				.first()
-			if (!server) return errors.serverNotFound
+			const server = await ctx.db.get(serverId)
+			if (!server) return
 
 			const members = await ctx.db
 				.query('member')
-				.filter(q => q.eq(q.field('serverId'), args.serverId))
+				.filter(q => q.eq(q.field('serverId'), serverId))
 				.collect()
 
 			return {
 				status: 'success',
 				code: 200,
-				message: 'Members collected',
+				message: 'MEMBERS_GATHERED',
+				details: 'La liste des membres du serveur on été récupérés',
 				data: members
 			}
 		} catch (error: unknown) {
@@ -61,33 +57,31 @@ export const l = query({
 	}
 })
 
-// Le update est juste pour les permissions et les roles ... TBD
-
 export const d = mutation({
 	args: {
-		serverId: v.id('server'),
-		userId: v.string()
+		userId: v.id('user'),
+		serverId: v.id('server')
 	},
-	handler: async (ctx, args) => {
+	handler: async (ctx, { userId, serverId }) => {
 		try {
-			const server = await ctx.db
-				.query('server')
-				.filter(q => q.eq(q.field('_id'), args.serverId))
-				.first()
-			if (!server) return errors.serverNotFound
+			const user = await ctx.db.get(userId)
+			if (!user) return // User not found
+			const server = await ctx.db.get(serverId)
+			if (!server) return
 
 			const member = await ctx.db
 				.query('member')
-				.filter(q => q.eq(q.field('_id'), args.userId))
+				.filter(q => q.eq(q.field('userId'), userId))
 				.first()
-			if (!member) return errors.memberNotFound
+			if (!member) return
 
 			await ctx.db.delete(member._id)
 
 			return {
 				status: 'success',
 				code: 200,
-				message: "Channel deleted and all it's messages too"
+				message: 'MEMBER_DELETED',
+				details: "L'utilisateur a bien été retiré du serveur"
 			}
 		} catch (error: unknown) {
 			return handleError(error)
@@ -108,19 +102,4 @@ function handleError(error: unknown) {
 				message: 'Unknown Error',
 				details: String(error)
 			}
-}
-
-const errors = {
-	serverNotFound: {
-		status: 'error',
-		code: 404,
-		message: 'Server not found',
-		details: 'The specified Server does not exist'
-	},
-	memberNotFound: {
-		status: 'error',
-		code: 404,
-		message: 'Member not found',
-		details: 'The specified member does not exist'
-	}
 }

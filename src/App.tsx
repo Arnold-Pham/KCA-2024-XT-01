@@ -1,13 +1,14 @@
 import { IonApp, setupIonicReact } from '@ionic/react'
 import { IonReactRouter } from '@ionic/react-router'
+import ProtectedRoute from './utils/ProtectedRoute'
 import { App as CapApp } from '@capacitor/app'
 import { useAuth0 } from '@auth0/auth0-react'
 import { Browser } from '@capacitor/browser'
 import { Route } from 'react-router-dom'
 import { useEffect } from 'react'
 
-import ErrorHandler from './errors/ErrorHandler'
-import ErrorRoute from './errors/ErrorRoute'
+import ErrorHandler from './utils/ErrorHandler'
+import ErrorRoute from './utils/ErrorRoute'
 import Home from './pages/Home'
 
 /* Core CSS required for Ionic components to work properly */
@@ -56,7 +57,7 @@ export default function App() {
 		<IonApp>
 			<IonReactRouter>
 				<Route path="/" exact component={Home} />
-				<Route path="/g/:name" exact component={Home} />
+				<ProtectedRoute path="/g/:name" exact component={Home} />
 				<ErrorRoute path="/e/:code" exact component={ErrorHandler} />
 			</IonReactRouter>
 		</IonApp>
