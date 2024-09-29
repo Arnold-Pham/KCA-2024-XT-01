@@ -1,5 +1,6 @@
 import { mutation, query } from './_generated/server'
 import { v } from 'convex/values'
+import error from './errors'
 
 export const c = mutation({
 	args: {
@@ -9,9 +10,9 @@ export const c = mutation({
 	handler: async (ctx, { userId, serverId }) => {
 		try {
 			const user = await ctx.db.get(userId)
-			if (!user) return
+			if (!user) return error.unknownUser
 			const server = await ctx.db.get(serverId)
-			if (!server) return
+			if (!server) return error.unknownServer
 
 			await ctx.db.insert('member', {
 				serverId: serverId,
@@ -37,7 +38,7 @@ export const l = query({
 	handler: async (ctx, { serverId }) => {
 		try {
 			const server = await ctx.db.get(serverId)
-			if (!server) return
+			if (!server) return error.unknownServer
 
 			const members = await ctx.db
 				.query('member')
@@ -65,15 +66,15 @@ export const d = mutation({
 	handler: async (ctx, { userId, serverId }) => {
 		try {
 			const user = await ctx.db.get(userId)
-			if (!user) return // User not found
+			if (!user) return error.unknownUser
 			const server = await ctx.db.get(serverId)
-			if (!server) return
+			if (!server) return error.unknownServer
 
 			const member = await ctx.db
 				.query('member')
 				.filter(q => q.eq(q.field('userId'), userId))
 				.first()
-			if (!member) return
+			if (!member) return error.userNotMember
 
 			await ctx.db.delete(member._id)
 

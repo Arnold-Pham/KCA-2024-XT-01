@@ -1,6 +1,7 @@
 import { MutationCtx } from './_generated/server'
 import { mutation } from './_generated/server'
 import { v } from 'convex/values'
+import error from './errors'
 
 const generateCode = async (ctx: MutationCtx, length: number = 12): Promise<string> => {
 	const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
@@ -27,9 +28,9 @@ export const c = mutation({
 	handler: async (ctx, { creatorId, serverId, maxUses, expiresAt }) => {
 		try {
 			const user = await ctx.db.get(creatorId)
-			if (!user) return
+			if (!user) return error.unknownUser
 			const server = await ctx.db.get(serverId)
-			if (!server) return
+			if (!server) return error.unknownServer
 
 			const codeGen = await generateCode(ctx)
 
@@ -66,18 +67,18 @@ export const use = mutation({
 				.query('invitCode')
 				.filter(q => q.eq(q.field('code'), args.code))
 				.first()
-			if (!invitCode) return
+			if (!invitCode) return error.invalidInviteCode
 
 			const { serverId, maxUses, uses, expiresAt } = invitCode
 
-			if (expiresAt !== undefined && expiresAt < Date.now()) return
-			if (maxUses !== undefined && maxUses > 0 && uses >= maxUses) return
+			if (expiresAt !== undefined && expiresAt < Date.now()) return error.inviteCodeExpired
+			if (maxUses !== undefined && maxUses > 0 && uses >= maxUses) return error.inviteCodeMaxUsesExceeded
 
 			const server = await ctx.db
 				.query('server')
 				.filter(q => q.eq(q.field('_id'), serverId))
 				.first()
-			if (!server) return
+			if (!server) return error.unknownServer
 
 			await ctx.db.insert('member', {
 				serverId: serverId,

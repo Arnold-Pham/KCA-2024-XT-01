@@ -1,4 +1,4 @@
-const errorArray = {
+const error = {
 	unknownUser: {
 		status: 'error',
 		code: 404,
@@ -95,6 +95,12 @@ const errorArray = {
 		message: 'MEMBER_ALREADY_EXISTS',
 		details: 'The user is already a member of this server'
 	},
+	userNotMember: {
+		status: 'error',
+		code: 403,
+		message: 'NOT_A_MEMBER',
+		details: 'The user not a member of this server'
+	},
 	unknownChannel: {
 		status: 'error',
 		code: 404,
@@ -154,5 +160,19 @@ const errorArray = {
 		code: 403,
 		message: 'USER_NOT_AUTHORIZED',
 		details: 'You do not have the necessary permissions to perform this action'
+	},
+	tooManyChannels: {
+		status: 'error',
+		code: 403,
+		message: 'TOO_MANY_CHANNELS',
+		details: 'This server reached the channels limit'
+	},
+	channelUnchanged: {
+		status: 'error',
+		code: 400,
+		message: 'CHANNEL_UNCHANGED',
+		details: 'No changes were made to the channel informations'
 	}
 }
+
+export default error

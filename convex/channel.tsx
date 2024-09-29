@@ -1,5 +1,6 @@
 import { mutation, query } from './_generated/server'
 import { v } from 'convex/values'
+import error from './errors'
 
 export const c = mutation({
 	args: {
@@ -9,24 +10,24 @@ export const c = mutation({
 	},
 	handler: async (ctx, { name, userId, serverId }) => {
 		try {
-			if (!name || name.trim() === '') return
-			if (name.trim().length > 32) return
+			if (!name || name.trim() === '') return error.channelNameEmpty
+			if (name.trim().length > 32) return error.channelNameTooLong
 			const user = await ctx.db.get(userId)
-			if (!user) return
+			if (!user) return error.unknownUser
 			const server = await ctx.db.get(serverId)
-			if (!server) return
+			if (!server) return error.unknownServer
 
 			const member = await ctx.db
 				.query('member')
 				.filter(q => q.and(q.eq(q.field('userId'), userId), q.eq(q.field('serverId'), serverId)))
 				.first()
-			if (!member) return
+			if (!member) return error.userNotMember
 
 			const channels = await ctx.db
 				.query('channel')
 				.filter(q => q.eq(q.field('serverId'), serverId))
 				.collect()
-			if (channels.length >= 32) return
+			if (channels.length >= 32) return error.tooManyChannels
 
 			await ctx.db.insert('channel', {
 				serverId,
@@ -54,15 +55,15 @@ export const l = query({
 	handler: async (ctx, { userId, serverId }) => {
 		try {
 			const user = await ctx.db.get(userId)
-			if (!user) return
+			if (!user) return error.unknownUser
 			const server = await ctx.db.get(serverId)
-			if (!server) return
+			if (!server) return error.unknownServer
 
 			const member = await ctx.db
 				.query('member')
 				.filter(q => q.and(q.eq(q.field('userId'), userId), q.eq(q.field('serverId'), serverId)))
 				.first()
-			if (!member) return
+			if (!member) return error.userNotMember
 
 			const channels = await ctx.db
 				.query('channel')
@@ -92,19 +93,19 @@ export const u = mutation({
 	},
 	handler: async (ctx, { userId, serverId, channelId, name, type }) => {
 		try {
-			if (!name && !type) return
-			if (name && name.trim().length === 0) return
-			if (name && name.trim().length > 32) return
-			if (type && type !== 'text' && type !== 'vocal') return
+			if (!name && !type) return error.channelUnchanged
+			if (name && (name.trim().length === 0 || name.trim() === '')) return error.channelNameEmpty
+			if (name && name.trim().length > 32) return error.channelNameTooLong
+			if (type && type !== 'text' && type !== 'vocal') return error.channelTypeInvalid
 
 			const user = await ctx.db.get(userId)
-			if (!user) return
+			if (!user) return error.unknownUser
 			const server = await ctx.db.get(serverId)
-			if (!server) return
+			if (!server) return error.unknownServer
 			const channel = await ctx.db.get(channelId)
-			if (!channel) return
+			if (!channel) return error.unknownChannel
 
-			if (userId !== server.userId && userId !== server.ownerId) return
+			if (userId !== server.userId && userId !== server.ownerId) return error.userNotAuthorized
 
 			await ctx.db.patch(channelId, {
 				name: name ? name.trim() : channel.name,
@@ -132,12 +133,12 @@ export const d = mutation({
 	handler: async (ctx, { userId, serverId, channelId }) => {
 		try {
 			const user = await ctx.db.get(userId)
-			if (!user) return
+			if (!user) return error.unknownUser
 			const server = await ctx.db.get(serverId)
-			if (!server) return
+			if (!server) return error.unknownServer
 			const channel = await ctx.db.get(channelId)
-			if (!channel) return
-			if (userId !== server.userId && userId !== server.ownerId) return
+			if (!channel) return error.unknownChannel
+			if (userId !== server.userId && userId !== server.ownerId) return error.userNotAuthorized
 
 			const messages = await ctx.db
 				.query('message')

@@ -1,6 +1,7 @@
 import { mutation, query, MutationCtx, QueryCtx } from './_generated/server'
 import { Doc, Id } from './_generated/dataModel'
 import { v } from 'convex/values'
+import error from './errors'
 
 export const c = mutation({
 	args: {
@@ -12,8 +13,8 @@ export const c = mutation({
 
 	handler: async (ctx, { userId, serverId, channelId, content }) => {
 		try {
-			if (!content || content.trim() === '') return
-			if (content.trim().length > 3000) return
+			if (!content || content.trim() === '') return error.messageEmpty
+			if (content.trim().length > 1000) return error.messageTooLong
 			const validationError = await verifyUserServerChannel(ctx, { userId, serverId, channelId })
 			if (validationError) return validationError
 
@@ -91,15 +92,15 @@ export const u = mutation({
 
 	handler: async (ctx, { userId, serverId, channelId, messageId, content }) => {
 		try {
-			if (!content || content.trim() === '') return
-			if (content.trim().length > 3000) return
+			if (!content || content.trim() === '') return error.messageEmpty
+			if (content.trim().length > 1000) return error.messageTooLong
 			const validationError = await verifyUserServerChannel(ctx, { userId, serverId, channelId })
 			if (validationError) return validationError
 			const message = await ctx.db.get(messageId)
-			if (!message) return
-			if (message.deleted) return
-			if (userId !== message.userId) return
-			if (content.trim() === message.content) return
+			if (!message) return error.unknownMessage
+			if (message.deleted) return error.messageDeleted
+			if (userId !== message.userId) return error.userNotAuthorized
+			if (content.trim() === message.content) return error.messageUnchanged
 
 			await ctx.db.patch(messageId, {
 				content: content.trim(),
@@ -132,9 +133,9 @@ export const d = mutation({
 			const validationError = await verifyUserServerChannel(ctx, args)
 			if (validationError) return validationError
 			const message = await ctx.db.get(args.messageId)
-			if (!message) return
-			if (message.deleted) return
-			if (args.userId !== message.userId) return
+			if (!message) return error.unknownMessage
+			if (message.deleted) return error.messageDeleted
+			if (args.userId !== message.userId) return error.userNotAuthorized
 
 			await ctx.db.patch(args.messageId, {
 				modifiedAt: Date.now(),
@@ -174,18 +175,18 @@ async function verifyUserServerChannel(
 	{ userId, serverId, channelId }: { userId: Id<'user'>; serverId: Id<'server'>; channelId: Id<'channel'> }
 ) {
 	const user = await ctx.db.get(userId)
-	if (!user) return
+	if (!user) return error.unknownUser
 	const server = await ctx.db.get(serverId)
-	if (!server) return
+	if (!server) return error.unknownServer
 
 	const member = await ctx.db
 		.query('member')
 		.filter(q => q.and(q.eq(q.field('userId'), userId), q.eq(q.field('serverId'), serverId)))
 		.first()
-	if (!member) return
+	if (!member) return error.userNotMember
 
 	const channel = await ctx.db.get(channelId)
-	if (!channel) return
+	if (!channel) return error.unknownChannel
 
 	return null
 }

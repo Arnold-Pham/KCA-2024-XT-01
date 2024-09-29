@@ -1,5 +1,6 @@
 import { mutation, query } from './_generated/server'
 import { v } from 'convex/values'
+import error from './errors'
 
 export const c = mutation({
 	args: {
@@ -9,11 +10,11 @@ export const c = mutation({
 	},
 	handler: async (ctx, { userId, name, description }) => {
 		try {
-			if (!name || name.trim() === '') return
-			if (name.trim().length > 32) return
+			if (!name || name.trim() === '') return error.serverNameEmpty
+			if (name.trim().length > 50) return error.serverNameTooLong
 
 			const user = await ctx.db.get(userId)
-			if (!user) return
+			if (!user) return error.unknownUser
 
 			const server = await ctx.db.insert('server', {
 				userId: userId,
@@ -51,7 +52,7 @@ export const l = query({
 	handler: async (ctx, { userId }) => {
 		try {
 			const user = await ctx.db.get(userId)
-			if (!user) return
+			if (!user) return error.unknownUser
 
 			const members = await ctx.db
 				.query('member')
