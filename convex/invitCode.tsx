@@ -1,7 +1,7 @@
+import { error, handleError, verifyUSMC } from './errors'
 import { MutationCtx } from './_generated/server'
 import { mutation } from './_generated/server'
 import { v } from 'convex/values'
-import error from './errors'
 
 const generateCode = async (ctx: MutationCtx, length: number = 12): Promise<string> => {
 	const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
@@ -17,20 +17,17 @@ const generateCode = async (ctx: MutationCtx, length: number = 12): Promise<stri
 		if (!existingCode) return code
 	}
 }
-
 export const c = mutation({
 	args: {
 		creatorId: v.id('user'),
 		serverId: v.id('server'),
-		maxUses: v.optional(v.number()),
-		expiresAt: v.optional(v.number())
+		maxUses: v.optional(v.union(v.number(), v.null())),
+		expiresAt: v.optional(v.union(v.number(), v.null()))
 	},
 	handler: async (ctx, { creatorId, serverId, maxUses, expiresAt }) => {
 		try {
-			const user = await ctx.db.get(creatorId)
-			if (!user) return error.unknownUser
-			const server = await ctx.db.get(serverId)
-			if (!server) return error.unknownServer
+			const validationError = await verifyUSMC(ctx, { userId: creatorId, serverId })
+			if (validationError) return validationError
 
 			const codeGen = await generateCode(ctx)
 
@@ -47,7 +44,7 @@ export const c = mutation({
 				status: 'success',
 				code: 200,
 				message: 'CODE_CREATED',
-				details: "Le code d'invitation a bien été créé",
+				details: 'The invitation code has been successfully created',
 				data: codeGen
 			}
 		} catch (error: unknown) {
@@ -58,8 +55,8 @@ export const c = mutation({
 
 export const use = mutation({
 	args: {
-		code: v.string(),
-		userId: v.id('user')
+		userId: v.id('user'),
+		code: v.string()
 	},
 	handler: async (ctx, args) => {
 		try {
@@ -67,18 +64,15 @@ export const use = mutation({
 				.query('invitCode')
 				.filter(q => q.eq(q.field('code'), args.code))
 				.first()
-			if (!invitCode) return error.invalidInviteCode
+			if (!invitCode) return error.inviteCodeInvalid
 
 			const { serverId, maxUses, uses, expiresAt } = invitCode
 
-			if (expiresAt !== undefined && expiresAt < Date.now()) return error.inviteCodeExpired
-			if (maxUses !== undefined && maxUses > 0 && uses >= maxUses) return error.inviteCodeMaxUsesExceeded
+			if (expiresAt && expiresAt < Date.now()) return error.inviteCodeExpired
+			if (maxUses && maxUses > 0 && uses >= maxUses) return error.inviteCodeMaxUsesExceeded
 
-			const server = await ctx.db
-				.query('server')
-				.filter(q => q.eq(q.field('_id'), serverId))
-				.first()
-			if (!server) return error.unknownServer
+			const validationError = await verifyUSMC(ctx, { serverId })
+			if (validationError) return validationError
 
 			await ctx.db.insert('member', {
 				serverId: serverId,
@@ -91,25 +85,10 @@ export const use = mutation({
 				status: 'success',
 				code: 200,
 				message: 'CODE_USED',
-				details: "Le code d'invitation a bien été utilisé"
+				details: 'The invitation code has been successfully used'
 			}
 		} catch (error: unknown) {
 			return handleError(error)
 		}
 	}
 })
-
-function handleError(error: unknown) {
-	throw error instanceof Error
-		? {
-				status: 'error',
-				code: 500,
-				message: error.message || 'Server Error'
-			}
-		: {
-				status: 'error',
-				code: 500,
-				message: 'Unknown Error',
-				details: String(error)
-			}
-}

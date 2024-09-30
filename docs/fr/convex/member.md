@@ -1,117 +1,173 @@
-# Documentation - Gestion des Membres
+# Documentation du Fichier `member.tsx`
 
-Le module `member` gère l'ajout, la consultation et la suppression des membres d'un serveur
-Cette documentation décrit le fonctionnement de chaque fonction disponible dans le CRUD (Create, Read, Update, Delete) pour la table `member`
+Ce fichier contient les définitions des mutations et des requêtes pour gérer les membres d'un serveur. Les opérations incluent l'ajout de membres, la récupération de la liste des membres, et la suppression de membres.
 
-## Table `member`
+## Table des Matières
 
-### Structure
-
-| Champ      | Type                | Description                                                |
-| ---------- | ------------------- | ---------------------------------------------------------- |
-| `serverId` | `id('server')`      | Identifiant du serveur auquel le membre appartient         |
-| `userId`   | `id('user')`        | Identifiant de l'utilisateur en tant que membre du serveur |
-| `role`     | `id('role')`/`null` | _(optionnel)_ Rôle attribué au membre dans le serveur      |
-
-### Règles de validation
-
--   **Membre**:
-    -   Un membre doit être lié à un serveur existant (`serverId`)
-    -   Un membre doit être lié à un utilisateur existant (`userId`)
--   **Rôle**:
-    -   Optionnel, mais doit correspondre à un rôle existant si spécifié
+1. [Importations](#importations)
+2. [Mutations](#mutations)
+    - [Ajouter un Membre (c)](#ajouter-un-membre-c)
+    - [Supprimer un Membre (d)](#supprimer-un-membre-d)
+3. [Requêtes](#requêtes)
+    - [Lister les Membres (l)](#lister-les-membres-l)
+4. [Gestion des Erreurs](#gestion-des-erreurs)
 
 ---
 
-## Fonctionnalités CRUD
+## 1. Importations
 
-### 1. `c` - Ajout d'un Membre _(Create)_
+```typescript
+import { error, handleError, verifyUSMC } from './errors'
+import { mutation, query } from './_generated/server'
+import { v } from 'convex/values'
+```
 
-#### Description
+-   **`error`**: Un objet contenant diverses erreurs pré-définies pour les validations
+-   **`handleError`**: Une fonction utilisée pour gérer les erreurs d'appels à convex
+-   **`verifyUSMC`**: Une fonction pour valider l'utilisateur, le serveur et vérifier si l'utilisateur est membre du serveur
+-   **`mutation`**: Fonction pour définir des mutations dans le contexte de votre serveur
+-   **`query`**: Fonction pour définir des requêtes dans le contexte de votre serveur
+-   **`v`**: Utilisé pour valider les types des arguments
 
-Ajoute un nouvel utilisateur en tant que membre dans un serveur spécifié
+---
+
+## 2. Mutations
+
+### Ajouter un Membre (c)
+
+```typescript
+export const c = mutation({
+	args: {
+		userId: v.id('user'),
+		serverId: v.id('server')
+	},
+	handler: async (ctx, { userId, serverId }) => {
+		// Logic
+	}
+})
+```
 
 #### Arguments
 
--   `serverId`: `id('server')` - Identifiant du serveur auquel le membre doit être ajouté
--   `userId`: `id('user')` - Identifiant de l'utilisateur qui sera ajouté en tant que membre
--   `role`: `id('role')` _(facultatif)_ - Rôle assigné au membre dans le serveur. Si non spécifié, aucun rôle n'est attribué
+-   **`userId`**: ID de l'utilisateur à ajouter en tant que membre du serveur _(doit être un identifiant valide de type `user`)_
+-   **`serverId`**: ID du serveur auquel l'utilisateur sera ajouté _(doit être un identifiant valide de type `server`)_
 
-#### Comportement
+#### Fonctionnement
 
--   **Validation**:
-    -   Vérifie que le serveur existe
--   **Insertion**:
-    -   Si le serveur existe, insère un nouveau membre dans la table `member` avec les informations fournies
+1. Utilise `verifyUSMC` pour valider l'utilisateur et le serveur
+2. Insère l'utilisateur dans la collection `member` de la base de données, associant l'utilisateur au serveur
+3. Retourne un message de succès ou une erreur appropriée
 
-#### Réponses
+#### Réponse
 
--   **Success**: `{ status: 'success', code: 200, message: 'Member added' }`
--   **Errors**:
-    -   `errors.serverNotFound`: Serveur non trouvé
+-   **Succès** :
+
+    ```json
+    {
+    	"status": "success",
+    	"code": 200,
+    	"message": "MEMBER_ADDED",
+    	"details": "The user has been successfully added as a server member"
+    }
+    ```
+
+-   **Erreurs possibles** :
+    -   `error.userNotMember`
 
 ---
 
-### 2. `l` - Consultation des Membres _(List)_
+### Supprimer un Membre (d)
 
-#### Description
-
-Récupère la liste des membres d'un serveur spécifié
+```typescript
+export const d = mutation({
+	args: {
+		userId: v.id('user'),
+		serverId: v.id('server')
+	},
+	handler: async (ctx, { userId, serverId }) => {
+		// Logic
+	}
+})
+```
 
 #### Arguments
 
--   `serverId`: `id('server')` - Identifiant du serveur pour lequel les membres doivent être récupérés
+-   **`userId`**: ID de l'utilisateur à supprimer du serveur _(doit être un identifiant valide de type `user`)_
+-   **`serverId`**: ID du serveur duquel l'utilisateur sera supprimé _(doit être un identifiant valide de type `server`)_
 
-#### Comportement
+#### Fonctionnement
 
--   **Validation**:
-    -   Vérifie que le serveur existe
--   **Récupération**:
-    -   Si le serveur existe, récupère tous les membres associés au serveur spécifié
+1. Utilise `verifyUSMC` pour valider l'utilisateur et le serveur
+2. Recherche le membre dans la collection `member` en utilisant l'ID de l'utilisateur
+3. Vérifie si le membre existe ; si non, retourne une erreur indiquant que l'utilisateur n'est pas membre
+4. Supprime le membre de la base de données
+5. Retourne un message de succès ou une erreur appropriée
 
-#### Réponses
+#### Réponse
 
--   **Success**: `{ status: 'success', code: 200, message: 'Members collected', data: members }`
--   **Errors**:
-    -   `errors.serverNotFound`: Serveur non trouvé
+-   **Succès** :
+
+    ```json
+    {
+    	"status": "success",
+    	"code": 200,
+    	"message": "MEMBER_DELETED",
+    	"details": "The user has been successfully removed from the server"
+    }
+    ```
+
+-   **Erreurs possibles** :
+    -   `error.userNotMember`
+    -   Autres erreurs de validation via `handleError`
 
 ---
 
-### 3. `d` - Suppression d'un Membre _(Delete)_
+## 3. Requêtes
 
-#### Description
+### Lister les Membres (l)
 
-Supprime un membre d'un serveur spécifié
+```typescript
+export const l = query({
+	args: {
+		serverId: v.id('server')
+	},
+	handler: async (ctx, { serverId }) => {
+		// Logic
+	}
+})
+```
 
 #### Arguments
 
--   `serverId`: `id('server')` - Identifiant du serveur
--   `userId`: `string` - Identifiant de l'utilisateur à supprimer en tant que membre
+-   **`serverId`**: ID du serveur pour lequel la liste des membres est demandée _(doit être un identifiant valide de type `server`)_
 
-#### Comportement
+#### Fonctionnement
 
--   **Validation**:
-    -   Vérifie que le serveur existe
-    -   Vérifie que le membre existe dans le serveur
--   **Suppression**:
-    -   Si le serveur et le membre existent, supprime le membre de la table `member`
+1. Utilise `verifyUSMC` pour valider le serveur
+2. Récupère la liste des membres du serveur depuis la collection `member`
+3. Retourne un message de succès contenant la liste des membres ou une erreur appropriée
 
-#### Réponses
+#### Réponse
 
--   **Success**: `{ status: 'success', code: 200, message: 'Member deleted' }`
--   **Errors**:
-    -   `errors.serverNotFound`: Serveur non trouvé
-    -   `errors.memberNotFound`: Membre non trouvé
+-   **Succès** :
+
+    ```json
+    {
+    	"status": "success",
+    	"code": 200,
+    	"message": "MEMBERS_GATHERED",
+    	"details": "The server members list has been successfully retrieved",
+    	"data": [
+    		/* Liste des membres */
+    	]
+    }
+    ```
+
+-   **Erreurs possibles** :
+    -   `error.userNotMember`
 
 ---
 
-## Gestion des Erreurs
+## 4. Gestion des Erreurs
 
-Les fonctions utilisent un objet d'erreurs standardisé pour renvoyer des réponses cohérentes:
-
-| Code d'Erreur           | Statut | Message          | Détails supplémentaires                         |
-| ----------------------- | ------ | ---------------- | ----------------------------------------------- |
-| `errors.serverNotFound` | 404    | Server not found | Le serveur spécifié n'existe pas                |
-| `errors.memberNotFound` | 404    | Member not found | Le membre spécifié n'existe pas dans le serveur |
-
-Les réponses d'erreur incluent toujours un statut HTTP (`code`) et un message d'erreur clair pour faciliter le débogage et la compréhension du problème
+Chaque mutation et requête utilise la fonction `handleError` pour capturer et gérer les exceptions. Les erreurs peuvent inclure des problèmes de validation, des erreurs d'accès ou des erreurs inattendues. Les réponses en cas d'erreur contiendront un statut, un code et un message explicite pour faciliter le débogage.

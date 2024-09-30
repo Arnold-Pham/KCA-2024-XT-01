@@ -1,7 +1,7 @@
-import { mutation, query, MutationCtx, QueryCtx } from './_generated/server'
-import { Doc, Id } from './_generated/dataModel'
+import { error, handleError, verifyUSMC } from './errors'
+import { mutation, query } from './_generated/server'
+import { Doc } from './_generated/dataModel'
 import { v } from 'convex/values'
-import error from './errors'
 
 export const c = mutation({
 	args: {
@@ -15,7 +15,8 @@ export const c = mutation({
 		try {
 			if (!content || content.trim() === '') return error.messageEmpty
 			if (content.trim().length > 1000) return error.messageTooLong
-			const validationError = await verifyUserServerChannel(ctx, { userId, serverId, channelId })
+
+			const validationError = await verifyUSMC(ctx, { userId, serverId, channelId })
 			if (validationError) return validationError
 
 			await ctx.db.insert('message', {
@@ -31,7 +32,7 @@ export const c = mutation({
 				status: 'success',
 				code: 200,
 				message: 'MESSAGE_SENT',
-				details: 'Le message a bien été envoyé'
+				details: 'The message has been successfully sent'
 			}
 		} catch (error: unknown) {
 			return handleError(error)
@@ -48,9 +49,10 @@ export const l = query({
 
 	handler: async (ctx, args) => {
 		try {
-			const validationError = await verifyUserServerChannel(ctx, args)
+			const validationError = await verifyUSMC(ctx, args)
 			if (validationError) return validationError
-			const messagesWithName: (Doc<'message'> & { username?: string; picture?: string })[] = []
+
+			const messagesWithName: (Doc<'message'> & { username?: string; picture?: string | null })[] = []
 
 			const messages = await ctx.db
 				.query('message')
@@ -72,7 +74,7 @@ export const l = query({
 				status: 'success',
 				code: 200,
 				message: 'MESSAGES_GATHERED',
-				details: 'Les cinquante derniers messages ont été récupérés avec les informations utilisateur',
+				details: 'The last fifty messages have been successfully retrieved along with user information',
 				data: messagesWithName.reverse()
 			}
 		} catch (error: unknown) {
@@ -94,8 +96,10 @@ export const u = mutation({
 		try {
 			if (!content || content.trim() === '') return error.messageEmpty
 			if (content.trim().length > 1000) return error.messageTooLong
-			const validationError = await verifyUserServerChannel(ctx, { userId, serverId, channelId })
+
+			const validationError = await verifyUSMC(ctx, { userId, serverId, channelId })
 			if (validationError) return validationError
+
 			const message = await ctx.db.get(messageId)
 			if (!message) return error.unknownMessage
 			if (message.deleted) return error.messageDeleted
@@ -112,7 +116,7 @@ export const u = mutation({
 				status: 'success',
 				code: 200,
 				message: 'MESSAGE_UPDATED',
-				details: 'Le message a bien été mis à jour'
+				details: 'The message has been successfully updated'
 			}
 		} catch (error: unknown) {
 			return handleError(error)
@@ -130,8 +134,9 @@ export const d = mutation({
 
 	handler: async (ctx, args) => {
 		try {
-			const validationError = await verifyUserServerChannel(ctx, args)
+			const validationError = await verifyUSMC(ctx, args)
 			if (validationError) return validationError
+
 			const message = await ctx.db.get(args.messageId)
 			if (!message) return error.unknownMessage
 			if (message.deleted) return error.messageDeleted
@@ -146,47 +151,10 @@ export const d = mutation({
 				status: 'success',
 				code: 200,
 				message: 'MESSAGE_DELETED',
-				details: 'Le message a bien été supprimé'
+				details: 'The message has been successfully deleted'
 			}
 		} catch (error: unknown) {
 			return handleError(error)
 		}
 	}
 })
-
-function handleError(error: unknown) {
-	throw error instanceof Error
-		? {
-				status: 'error',
-				code: 500,
-				message: 'SERVER_ERROR',
-				details: error.message || 'Server Error'
-			}
-		: {
-				status: 'error',
-				code: 500,
-				message: 'UNKNOWN_ERROR',
-				details: String(error)
-			}
-}
-
-async function verifyUserServerChannel(
-	ctx: MutationCtx | QueryCtx,
-	{ userId, serverId, channelId }: { userId: Id<'user'>; serverId: Id<'server'>; channelId: Id<'channel'> }
-) {
-	const user = await ctx.db.get(userId)
-	if (!user) return error.unknownUser
-	const server = await ctx.db.get(serverId)
-	if (!server) return error.unknownServer
-
-	const member = await ctx.db
-		.query('member')
-		.filter(q => q.and(q.eq(q.field('userId'), userId), q.eq(q.field('serverId'), serverId)))
-		.first()
-	if (!member) return error.userNotMember
-
-	const channel = await ctx.db.get(channelId)
-	if (!channel) return error.unknownChannel
-
-	return null
-}

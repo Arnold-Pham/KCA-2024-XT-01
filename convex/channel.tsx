@@ -1,7 +1,8 @@
+import { error, handleError, verifyUSMC } from './errors'
 import { mutation, query } from './_generated/server'
 import { v } from 'convex/values'
-import error from './errors'
 
+// Ajouter la gestion du type
 export const c = mutation({
 	args: {
 		userId: v.id('user'),
@@ -12,16 +13,9 @@ export const c = mutation({
 		try {
 			if (!name || name.trim() === '') return error.channelNameEmpty
 			if (name.trim().length > 32) return error.channelNameTooLong
-			const user = await ctx.db.get(userId)
-			if (!user) return error.unknownUser
-			const server = await ctx.db.get(serverId)
-			if (!server) return error.unknownServer
 
-			const member = await ctx.db
-				.query('member')
-				.filter(q => q.and(q.eq(q.field('userId'), userId), q.eq(q.field('serverId'), serverId)))
-				.first()
-			if (!member) return error.userNotMember
+			const validationError = await verifyUSMC(ctx, { userId, serverId })
+			if (validationError) return validationError
 
 			const channels = await ctx.db
 				.query('channel')
@@ -39,7 +33,7 @@ export const c = mutation({
 				status: 'success',
 				code: 200,
 				message: 'CHANNEL_CREATED',
-				details: 'Le channel a bien été créé'
+				details: 'The channel has been successfully created'
 			}
 		} catch (error) {
 			return handleError(error)
@@ -49,21 +43,13 @@ export const c = mutation({
 
 export const l = query({
 	args: {
-		serverId: v.id('server'),
-		userId: v.id('user')
+		userId: v.id('user'),
+		serverId: v.id('server')
 	},
 	handler: async (ctx, { userId, serverId }) => {
 		try {
-			const user = await ctx.db.get(userId)
-			if (!user) return error.unknownUser
-			const server = await ctx.db.get(serverId)
-			if (!server) return error.unknownServer
-
-			const member = await ctx.db
-				.query('member')
-				.filter(q => q.and(q.eq(q.field('userId'), userId), q.eq(q.field('serverId'), serverId)))
-				.first()
-			if (!member) return error.userNotMember
+			const validationError = await verifyUSMC(ctx, { userId, serverId })
+			if (validationError) return validationError
 
 			const channels = await ctx.db
 				.query('channel')
@@ -74,7 +60,7 @@ export const l = query({
 				status: 'success',
 				code: 200,
 				message: 'CHANNELS_GATHERED',
-				details: 'La liste des channels à été récupérée',
+				details: 'Channel list has been successfully retrieved',
 				data: channels
 			}
 		} catch (error) {
@@ -98,8 +84,9 @@ export const u = mutation({
 			if (name && name.trim().length > 32) return error.channelNameTooLong
 			if (type && type !== 'text' && type !== 'vocal') return error.channelTypeInvalid
 
-			const user = await ctx.db.get(userId)
-			if (!user) return error.unknownUser
+			const validationError = await verifyUSMC(ctx, { userId })
+			if (validationError) return validationError
+
 			const server = await ctx.db.get(serverId)
 			if (!server) return error.unknownServer
 			const channel = await ctx.db.get(channelId)
@@ -108,7 +95,7 @@ export const u = mutation({
 			if (userId !== server.userId && userId !== server.ownerId) return error.userNotAuthorized
 
 			await ctx.db.patch(channelId, {
-				name: name ? name.trim() : channel.name,
+				name: name?.trim() || channel.name,
 				type: type || channel.type
 			})
 
@@ -116,7 +103,7 @@ export const u = mutation({
 				status: 'success',
 				code: 200,
 				message: 'CHANNEL_UPDATED',
-				details: 'Le channel à été mis a jour'
+				details: 'The channel has been successfully updated'
 			}
 		} catch (error) {
 			return handleError(error)
@@ -126,18 +113,17 @@ export const u = mutation({
 
 export const d = mutation({
 	args: {
-		channelId: v.id('channel'),
+		userId: v.id('user'),
 		serverId: v.id('server'),
-		userId: v.id('user')
+		channelId: v.id('channel')
 	},
 	handler: async (ctx, { userId, serverId, channelId }) => {
 		try {
-			const user = await ctx.db.get(userId)
-			if (!user) return error.unknownUser
+			const validationError = await verifyUSMC(ctx, { userId, channelId })
+			if (validationError) return validationError
+
 			const server = await ctx.db.get(serverId)
 			if (!server) return error.unknownServer
-			const channel = await ctx.db.get(channelId)
-			if (!channel) return error.unknownChannel
 			if (userId !== server.userId && userId !== server.ownerId) return error.userNotAuthorized
 
 			const messages = await ctx.db
@@ -152,26 +138,10 @@ export const d = mutation({
 				status: 'success',
 				code: 200,
 				message: 'CHANNEL_DELETED',
-				details: 'Le channel et tous ces messages ont été supprimés'
+				details: 'The channel and all associated messages have been deleted'
 			}
 		} catch (error) {
 			return handleError(error)
 		}
 	}
 })
-
-function handleError(error: unknown) {
-	return error instanceof Error
-		? {
-				status: 'error',
-				code: 500,
-				message: 'SERVER_ERROR',
-				details: error.message || 'Server Error'
-			}
-		: {
-				status: 'error',
-				code: 500,
-				message: 'UNKNOWN_ERROR',
-				details: String(error)
-			}
-}

@@ -1,114 +1,177 @@
-# Documentation - Gestion des Codes d'Invitation
+# Documentation du Fichier `invitCode.tsx`
 
-Le module `invitCode` gère la création, l'utilisation et la gestion des codes d'invitation pour permettre aux utilisateurs de rejoindre des serveurs
-Cette documentation décrit le fonctionnement de chaque fonction disponible dans le CRUD (Create, Read, Update, Delete) pour la table `invitCode`
+Ce fichier contient les définitions des mutations pour gérer la création et l'utilisation des codes d'invitation. Les fonctions incluent des validations pour garantir le bon fonctionnement des opérations.
 
-## Table `invitCode`
+## Table des Matières
 
-### Structure
-
-| Champ       | Type            | Description                                            |
-| ----------- | --------------- | ------------------------------------------------------ |
-| `serverId`  | `id('server')`  | Identifiant du serveur pour lequel le code est généré  |
-| `creatorId` | `string`        | Identifiant de l'utilisateur ayant créé le code        |
-| `code`      | `string`        | Code d'invitation unique généré aléatoirement          |
-| `uses`      | `number`        | Nombre actuel d'utilisations du code                   |
-| `maxUses`   | `number`/`null` | _(optionnel)_ Nombre maximal d'utilisations autorisées |
-| `expiresAt` | `number`/`null` | _(optionnel)_ Timestamp d'expiration du code           |
-
-### Règles de validation
-
--   **Code**:
-    -   Doit être unique. Un code généré est vérifié pour s'assurer qu'il n'existe pas déjà dans la base de données
--   **Utilisations**:
-    -   Doit être un entier positif
--   **Nombre maximal d'utilisations**:
-    -   Optionnel, si spécifié, doit être un entier positif
--   **Expiration**:
-    -   Optionnel, si spécifié, doit être un timestamp futur
+1. [Importations](#importations)
+2. [Fonctions Utilitaires](#fonctions-utilitaires)
+    - [Générer un Code (generateCode)](#generer-un-code-generateCode)
+3. [Mutations](#mutations)
+    - [Créer un Code d'Invitation (c)](#creer-un-code-dinvitation-c)
+    - [Utiliser un Code d'Invitation (use)](#utiliser-un-code-dinvitation-use)
+4. [Gestion des Erreurs](#gestion-des-erreurs)
 
 ---
 
-## Fonctionnalités CRUD
+## 1. Importations
 
-### 1. `c` - Création d'un Code d'Invitation _(Create)_
+```typescript
+import { error, handleError, verifyUSMC } from './errors'
+import { MutationCtx } from './_generated/server'
+import { mutation } from './_generated/server'
+import { v } from 'convex/values'
+```
 
-#### Description
+-   **`error`**: Un objet contenant diverses erreurs pré-définies pour les validations
+-   **`handleError`**: Une fonction utilisée pour gérer les erreurs d'appels à convex
+-   **`verifyUSMC`**: Une fonction pour valider l'utilisateur, le serveur et vérifier si l'utilisateur est membre du serveur
+-   **`MutationCtx`**: Type contextuel utilisé pour les mutations
+-   **`mutation`**: Fonction pour définir des mutations dans le contexte de votre serveur
+-   **`v`**: Utilisé pour valider les types des arguments
 
-Crée un nouveau code d'invitation pour un serveur spécifié
+---
+
+## 2. Fonctions Utilitaires
+
+### Générer un Code (generateCode)
+
+```typescript
+const generateCode = async (ctx: MutationCtx, length: number = 12): Promise<string> => {
+	const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+	let code = ''
+
+	while (true) {
+		for (let i = 0; i < length; i++) code += charset[Math.floor(Math.random() * charset.length)]
+
+		const existingCode = await ctx.db
+			.query('invitCode')
+			.filter(q => q.eq('code', code))
+			.first()
+		if (!existingCode) return code
+	}
+}
+```
 
 #### Arguments
 
--   `serverId`: `id('server')` - Identifiant du serveur pour lequel le code doit être généré
--   `creatorId`: `string` - Identifiant de l'utilisateur créant le code
--   `maxUses`: `number` _(facultatif)_ - Nombre maximal d'utilisations du code. Si non spécifié, le code peut être utilisé un nombre illimité de fois
--   `expiresAt`: `number` _(facultatif)_ - Timestamp d'expiration du code. Si non spécifié, le code n'expire pas
+-   **`ctx`**: Contexte de mutation qui contient des informations sur la base de données
+-   **`length`**: Longueur du code à générer _(par défaut: 12)_
 
-#### Comportement
+#### Fonctionnement
 
--   **Validation**:
-    -   Vérifie que le serveur et le créateur existent
-    -   Vérifie que le créateur possède les permissions pour générer des invitations pour ce serveur
--   **Génération**:
-    -   Génère un code unique aléatoire de 12 caractères
-    -   Vérifie que le code généré n'existe pas déjà
--   **Insertion**:
-    -   Insère le code généré dans la base de données avec les informations fournies
+1. Définit un ensemble de caractères _(lettres majuscules et chiffres)_ à partir duquel le code sera généré
+2. Utilise une boucle infinie pour générer un code aléatoire de la longueur spécifiée
+3. Vérifie si le code généré existe déjà dans la base de données
+4. Si le code existe, le processus recommence jusqu'à obtenir un code unique
 
-#### Réponses
+#### Retourne
 
--   **Success**: `{ status: 'success', code: 200, message: 'Code created', data: codeGen }`
--   **Errors**:
-    -   `errors.serverNotFound`: Serveur non trouvé
-    -   `errors.permissionDenied`: Permissions insuffisantes pour créer un code
+-   Un code d'invitation unique de la longueur spécifiée
 
 ---
 
-### 2. `use` - Utilisation d'un Code d'Invitation
+## 3. Mutations
 
-#### Description
+### Créer un Code d'Invitation (c)
 
-Permet à un utilisateur d'utiliser un code d'invitation pour rejoindre un serveur
+```typescript
+export const c = mutation({
+	args: {
+		creatorId: v.id('user'),
+		serverId: v.id('server'),
+		maxUses: v.optional(v.union(v.number(), v.null())),
+		expiresAt: v.optional(v.union(v.number(), v.null()))
+	},
+	handler: async (ctx, { creatorId, serverId, maxUses, expiresAt }) => {
+		// Logic
+	}
+})
+```
 
 #### Arguments
 
--   `code`: `string` - Code d'invitation à utiliser
--   `userId`: `id('user')` - Identifiant de l'utilisateur utilisant le code
+-   **`creatorId`**: ID de l'utilisateur qui crée le code d'invitation _(doit être un identifiant valide de type `user`)_
+-   **`serverId`**: ID du serveur pour lequel le code est créé _(doit être un identifiant valide de type `server`)_
+-   **`maxUses`** _(optionnel)_: Nombre maximal d'utilisations du code _(peut être un nombre ou `null`)_
+-   **`expiresAt`** _(optionnel)_: Timestamp indiquant la date d'expiration du code _(peut être un nombre ou `null`)_
 
-#### Comportement
+#### Fonctionnement
 
--   **Validation**:
-    -   Vérifie que le code existe
-    -   Vérifie que le code n'a pas expiré
-    -   Vérifie que le nombre maximal d'utilisations n'a pas été atteint
--   **Vérification du Serveur**:
-    -   Vérifie que le serveur associé au code existe
--   **Ajout de Membre**:
-    -   Ajoute l'utilisateur en tant que membre du serveur
--   **Mise à jour du Code**:
-    -   Incrémente le nombre d'utilisations du code
+1. Utilise `verifyUSMC` pour valider l'utilisateur et le serveur
+2. Génère un code d'invitation unique en appelant `generateCode`
+3. Insère le code d'invitation dans la base de données avec les détails fournis
+4. Retourne un message de succès ou une erreur appropriée
 
-#### Réponses
+#### Réponse
 
--   **Success**: `{ status: 'success', code: 200, message: 'Code used' }`
--   **Errors**:
-    -   `errors.invalid`: Code d'invitation inconnu
-    -   `errors.expired`: Code expiré
-    -   `errors.maxUsed`: Nombre maximal d'utilisations atteint
-    -   `errors.serverNotFound`: Serveur non trouvé
+-   **Succès** :
+
+    ```json
+    {
+    	"status": "success",
+    	"code": 200,
+    	"message": "CODE_CREATED",
+    	"details": "The invitation code has been successfully created",
+    	"data": // Le code généré
+    }
+    ```
+
+-   **Erreurs possibles** :
+    -   `error.userNotMember`
 
 ---
 
-## Gestion des Erreurs
+### Utiliser un Code d'Invitation (use)
 
-Les fonctions utilisent un objet d'erreurs standardisé pour renvoyer des réponses cohérentes:
+```typescript
+export const use = mutation({
+	args: {
+		userId: v.id('user'),
+		code: v.string()
+	},
+	handler: async (ctx, args) => {
+		// Logic
+	}
+})
+```
 
-| Code d'Erreur             | Statut | Message                  | Détails supplémentaires                               |
-| ------------------------- | ------ | ------------------------ | ----------------------------------------------------- |
-| `errors.invalid`          | 404    | Unknown code             | Le code d'invitation spécifié n'existe pas            |
-| `errors.expired`          | 400    | Code expired             | Le code d'invitation a expiré et ne peut être utilisé |
-| `errors.maxUsed`          | 400    | Code usage limit reached | Le code a atteint le nombre maximal d'utilisations    |
-| `errors.serverNotFound`   | 404    | Server not found         | Le serveur associé au code n'existe pas               |
-| `errors.permissionDenied` | 403    | Permission denied        | L'utilisateur n'a pas les permissions nécessaires     |
+#### Arguments
 
-Les réponses d'erreur incluent toujours un statut HTTP (`code`) et un message d'erreur clair pour faciliter le débogage et la compréhension du problème
+-   **`userId`**: ID de l'utilisateur qui souhaite utiliser le code _(doit être un identifiant valide de type `user`)_
+-   **`code`**: Code d'invitation à utiliser _(doit être une chaîne de caractères)_
+
+#### Fonctionnement
+
+1. Recherche le code d'invitation dans la base de données
+2. Vérifie si le code existe
+3. Vérifie si le code a expiré ou si le nombre maximal d'utilisations a été atteint
+4. Utilise `verifyUSMC` pour valider l'utilisateur par rapport au serveur associé au code
+5. Insère l'utilisateur en tant que membre dans le serveur
+6. Met à jour le nombre d'utilisations du code d'invitation
+7. Retourne un message de succès ou une erreur appropriée
+
+#### Réponse
+
+-   **Succès** :
+
+    ```json
+    {
+    	"status": "success",
+    	"code": 200,
+    	"message": "CODE_USED",
+    	"details": "The invitation code has been successfully used"
+    }
+    ```
+
+-   **Erreurs possibles** :
+    -   `error.inviteCodeInvalid`
+    -   `error.inviteCodeExpired`
+    -   `error.inviteCodeMaxUsesExceeded`
+    -   `error.userNotMember`
+
+---
+
+## 4. Gestion des Erreurs
+
+Chaque mutation utilise la fonction `handleError` pour capturer et gérer les exceptions. Les erreurs peuvent inclure des problèmes de validation, des erreurs d'accès ou des erreurs inattendues. Les réponses en cas d'erreur contiendront un statut, un code et un message explicite pour faciliter le débogage.

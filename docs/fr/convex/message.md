@@ -1,370 +1,249 @@
-# Documentation - Gestion des Messages
+# Documentation du Fichier `message.tsx`
 
-Le module `message` permet la gestion des messages dans les canaux (`channel`) d'un serveur. Il propose des fonctionnalités CRUD (Create, Read, Update, Delete) pour la table `message`.
+Ce fichier contient les définitions des mutations et des requêtes pour gérer les messages dans un canal de serveur. Les opérations incluent l'envoi de messages, la récupération des messages, la mise à jour des messages, et la suppression des messages.
 
-## Table `message`
+## Table des Matières
 
-### Structure
-
-| Champ        | Type            | Description                                                  |
-| ------------ | --------------- | ------------------------------------------------------------ |
-| `channelId`  | `id('channel')` | Identifiant du canal où le message est posté                 |
-| `userId`     | `id('user')`    | Identifiant de l'utilisateur ayant envoyé le message         |
-| `content`    | `string`        | Contenu du message                                           |
-| `modified`   | `boolean`       | Indique si le message a été modifié                          |
-| `modifiedAt` | `number`/`null` | Timestamp de la dernière modification, `null` si non modifié |
-| `deleted`    | `boolean`       | Indique si le message a été supprimé                         |
-
-### Règles de Validation
-
--   **Contenu**:
-    -   Ne doit pas être vide
-    -   La longueur maximale est de 3000 caractères
--   **Auteur**:
-    -   Un message doit être lié à un utilisateur membre du serveur
-    -   Seul l'auteur du message ou un modérateur peut le modifier ou le supprimer
+1. [Importations](#importations)
+2. [Mutations](#mutations)
+    - [Envoyer un Message (c)](#envoyer-un-message-c)
+    - [Mettre à Jour un Message (u)](#mettre-à-jour-un-message-u)
+    - [Supprimer un Message (d)](#supprimer-un-message-d)
+3. [Requêtes](#requêtes)
+    - [Lister les Messages (l)](#lister-les-messages-l)
+4. [Gestion des Erreurs](#gestion-des-erreurs)
 
 ---
 
-## Fonctionnalités CRUD
-
-### 1. `c` - Envoi d'un Message _(Create)_
-
-#### Description
-
-Ajoute un nouveau message dans un canal spécifié d'un serveur
-
-#### Arguments
-
--   `userId`: `id('user')` - Identifiant de l'utilisateur envoyant le message
--   `serverId`: `id('server')` - Identifiant du serveur auquel le canal appartient
--   `channelId`: `id('channel')` - Identifiant du canal où le message sera posté
--   `content`: `string` - Contenu du message
-
-#### Comportement
-
--   **Validation**:
-    -   Vérifie que le contenu n'est pas vide et ne dépasse pas 3000 caractères
-    -   Vérifie que l'utilisateur, le serveur et le canal existent
--   **Insertion**:
-    -   Si toutes les vérifications passent, insère le message dans la table `message` avec les informations fournies
-
-#### Réponses
-
--   **Success**:
-
-    ```javascript
-    {
-        status: 'success',
-        code: 200,
-        message: 'MESSAGE_SENT',
-        details: 'Le message a bien été envoyé'
-    }
-    ```
-
--   **Erreurs**:
-    -   `messageEmpty`: Le contenu du message est vide
-    -   `messageTooLong`: Le contenu du message dépasse 3000 caractères
-    -   `unknownUser`: Utilisateur non trouvé
-    -   `unknownServer`: Serveur non trouvé
-    -   `unknownChannel`: Canal non trouvé
-
----
-
-### 2. `l` - Consultation des Messages _(List)_
-
-#### Description
-
-Récupère la liste des messages d'un canal spécifié d'un serveur
-Par défaut, retourne les 50 derniers messages
-
-#### Arguments
-
--   `userId`: `id('user')` - Identifiant de l'utilisateur demandant les messages
--   `serverId`: `id('server')` - Identifiant du serveur auquel le canal appartient
--   `channelId`: `id('channel')` - Identifiant du canal dont les messages doivent être récupérés
-
-#### Comportement
-
--   **Validation**:
-    -   Vérifie que l'utilisateur, le serveur et le canal existent
--   **Récupération**:
-    -   Si toutes les vérifications passent, récupère les 50 derniers messages du canal spécifié, triés par ordre chronologique inverse
-
-#### Réponses
-
--   **Success**: Avec `messagesWithName` qui représente la jointure entre `user` et `message`
-
-    ```javascript
-    {
-        status: 'success',
-        code: 200,
-        message: 'MESSAGES_GATHERED',
-        details: 'Les cinquante derniers messages ont été récupérés',
-        data: messagesWithName.reverse()
-    }
-    ```
-
--   **Erreurs**:
-    -   `unknownUser`: Utilisateur non trouvé
-    -   `unknownServer`: Serveur non trouvé
-    -   `unknownChannel`: Canal non trouvé
-
----
-
-### 3. `u` - Modification d'un Message _(Update)_
-
-#### Description
-
-Modifie le contenu d'un message existant dans un canal d'un serveur
-
-#### Arguments
-
--   `userId`: `id('user')` - Identifiant de l'utilisateur modifiant le message
--   `serverId`: `id('server')` - Identifiant du serveur auquel le canal appartient
--   `channelId`: `id('channel')` - Identifiant du canal contenant le message
--   `messageId`: `id('message')` - Identifiant du message à modifier
--   `content`: `string` - Nouveau contenu du message
-
-#### Comportement
-
--   **Validation**:
-    -   Vérifie que le contenu n'est pas vide et ne dépasse pas 3000 caractères
-    -   Vérifie que l'utilisateur, le serveur, le canal et le message existent
-    -   Vérifie que le message n'est pas déjà supprimé
-    -   Seul l'auteur du message ou un modérateur peut le modifier
--   **Modification**:
-    -   Si toutes les vérifications passent, met à jour le contenu du message et indique qu'il a été modifié (`modified: true`, `modifiedAt: Date.now()`)
-
-#### Réponses
-
--   **Success**:
-
-    ```javascript
-    {
-        status: 'success',
-        code: 200,
-        message: 'MESSAGE_UPDATED',
-        details: 'Le message a bien été mis à jour'
-    }
-    ```
-
--   **Erreurs**:
-    -   `messageEmpty`: Le contenu du message est vide
-    -   `messageTooLong`: Le contenu du message dépasse 3000 caractères
-    -   `unknownUser`: Utilisateur non trouvé
-    -   `unknownServer`: Serveur non trouvé
-    -   `unknownChannel`: Canal non trouvé
-    -   `unknownMessage`: Message non trouvé
-    -   `messageDeleted`: Le message a déjà été supprimé
-    -   `messageNotAuthor`: Seul l'auteur du message peut le modifier
-    -   `messageUnchanged`: Le contenu du message est inchangé
-
----
-
-### 4. `d` - Suppression d'un Message _(Delete)_
-
-#### Description
-
-Supprime un message existant dans un canal d'un serveur
-
-#### Arguments
-
--   `userId`: `id('user')` - Identifiant de l'utilisateur demandant la suppression
--   `serverId`: `id('server')` - Identifiant du serveur auquel le canal appartient
--   `channelId`: `id('channel')` - Identifiant du canal contenant le message
--   `messageId`: `id('message')` - Identifiant du message à supprimer
-
-#### Comportement
-
--   **Validation**:
-    -   Vérifie que l'utilisateur, le serveur, le canal et le message existent
-    -   Vérifie que le message n'est pas déjà supprimé
-    -   Seul l'auteur du message ou un modérateur peut le supprimer
--   **Suppression**:
-    -   Si toutes les vérifications passent, marque le message comme supprimé (`deleted: true`)
-
-#### Réponses
-
--   **Success**:
-
-    ```javascript
-    {
-    	status: 'success',
-    	code: 200,
-    	message: 'MESSAGE_DELETED',
-    	details: 'Le message a bien été supprimé'
-    }
-    ```
-
--   **Erreurs**:
-    -   `unknownUser`: Utilisateur non trouvé
-    -   `unknownServer`: Serveur non trouvé
-    -   `unknownChannel`: Canal non trouvé
-    -   `unknownMessage`: Message non trouvé
-    -   `messageDeleted`: Le message a déjà été supprimé
-    -   `messageNotAuthor`: Seul l'auteur du message peut le supprimer
-
----
-
-## Fonctions Utilitaires - Gestion des Erreurs et Vérification des Données
-
-Les fonctions `handleError` et `verifyUserServerChannel` sont des utilitaires essentiels qui facilitent la gestion des erreurs et la vérification des entités utilisateur, serveur et canal avant d'exécuter les mutations ou les requêtes. Elles ne sont pas directement associées à des opérations CRUD, mais elles jouent un rôle crucial dans le bon fonctionnement de celles-ci.
-
-### 1. `handleError` - Gestion des Erreurs
-
-#### Description
-
-La fonction `handleError` centralise la gestion des erreurs en renvoyant un objet d'erreur formaté avec les informations appropriées. Cette fonction est utilisée pour intercepter les exceptions survenant lors des mutations et des requêtes et pour renvoyer un message d'erreur standardisé.
-
-#### Signature
+## 1. Importations
 
 ```typescript
-function handleError(error: unknown)
+import { error, handleError, verifyUSMC } from './errors'
+import { mutation, query } from './_generated/server'
+import { Doc } from './_generated/dataModel'
+import { v } from 'convex/values'
 ```
 
-#### Comportement
-
--   La fonction vérifie si l'erreur capturée est une instance de `Error`
--   Si c'est le cas, elle lève une nouvelle erreur avec les détails de l'erreur d'origine, en utilisant le format suivant:
-    ```javascript
-    {
-        status: 'error',
-        code: 500,
-        message: 'SERVER_ERROR',
-        details: error.message || 'Server Error'
-    }
-    ```
--   Si ce n'est pas une instance de `Error`, elle renvoie un objet d'erreur générique:
-    ```javascript
-    {
-        status: 'error',
-        code: 500,
-        message: 'UNKNOWN_ERROR',
-        details: String(error)
-    }
-    ```
--   La fonction relance toujours une erreur (`throw`), ce qui signifie qu'elle interrompt le flux d'exécution normal
-
-#### Exemple d'Utilisation
-
-Cette fonction est appelée dans les `try/catch` des mutations et des requêtes pour capturer les exceptions et renvoyer des erreurs formatées de manière uniforme
-
-```typescript
-try {
-	// Code susceptible de provoquer une erreur
-} catch (error: unknown) {
-	return handleError(error)
-}
-```
+-   **`error`**: Un objet contenant des erreurs pré-définies pour les validations
+-   **`handleError`**: Une fonction utilisée pour gérer les erreurs d'appels à convex
+-   **`verifyUSCM`**: Une fonction pour valider l'utilisateur, le serveur, le canal et vérifie si l'utilisateur est membre du serveur
+-   **`mutation`**: Fonction pour définir des mutations dans le contexte de votre serveur
+-   **`query`**: Fonction pour définir des requêtes dans le contexte de votre serveur
+-   **`Doc`**: Type utilisé pour représenter un document dans la base de données
+-   **`v`**: Utilisé pour valider les types des arguments
 
 ---
 
-### 2. `verifyUserServerChannel` - Vérification des Entités
+## 2. Mutations
 
-#### Description
-
-La fonction `verifyUserServerChannel` vérifie que l'utilisateur, le serveur, le membre et le canal associés à une opération existent bien dans la base de données. Cette vérification est nécessaire avant toute modification ou consultation des messages pour garantir la validité des entités impliquées.
-
-#### Signature
+### Envoyer un Message (c)
 
 ```typescript
-async function verifyUserServerChannel(
-	ctx: MutationCtx | QueryCtx,
-	{ userId, serverId, channelId }: { userId: Id<'user'>; serverId: Id<'server'>; channelId: Id<'channel'> }
-)
+export const c = mutation({
+	args: {
+		userId: v.id('user'),
+		serverId: v.id('server'),
+		channelId: v.id('channel'),
+		content: v.string()
+	},
+	handler: async (ctx, { userId, serverId, channelId, content }) => {
+		// Logic
+	}
+})
 ```
 
 #### Arguments
 
--   `ctx`: Contexte de la mutation ou de la requête (`MutationCtx | QueryCtx`)
--   `{ userId, serverId, channelId }`: Objet contenant les identifiants de l'utilisateur (`userId`), du serveur (`serverId`) et du canal (`channelId`) à vérifier
+-   **`userId`**: ID de l'utilisateur qui envoie le message _(doit être un identifiant valide de type `user`)_
+-   **`serverId`**: ID du serveur auquel le message est envoyé _(doit être un identifiant valide de type `server`)_
+-   **`channelId`**: ID du canal dans lequel le message est envoyé _(doit être un identifiant valide de type `channel`)_
+-   **`content`**: Contenu du message _(doit être une chaîne de caractères)_
 
-#### Comportement
+#### Fonctionnement
 
-1. **Vérification de l'Utilisateur**:
+1. Vérifie si le contenu est vide ou dépasse 1000 caractères
+2. Utilise `verifyUSMC` pour valider l'utilisateur, le serveur et le canal
+3. Insère le message dans la collection `message` de la base de données
+4. Retourne un message de succès ou une erreur appropriée
 
-    - Recherche l'utilisateur dans la table `user` en utilisant `userId`
-    - Si l'utilisateur n'est pas trouvé, renvoie une erreur `unknownUser`:
-        ```javascript
-        {
-        	status: 'error',
-        	code: 404,
-        	message: 'UNKNOWN_USER',
-        	details: 'The specified user could not be found in the database'
-        }
-        ```
+#### Réponse
 
-2. **Vérification du Serveur**:
+-   **Succès** :
 
-    - Recherche le serveur dans la table `server` en utilisant `serverId`
-    - Si le serveur n'est pas trouvé, renvoie une erreur `unknownServer`:
-        ```javascript
-        {
-        	status: 'error',
-        	code: 404,
-        	message: 'UNKNOWN_SERVER',
-        	details: 'The specified server could not be found in the list of available servers'
-        }
-        ```
+    ```json
+    {
+    	"status": "success",
+    	"code": 200,
+    	"message": "MESSAGE_SENT",
+    	"details": "The message has been successfully sent"
+    }
+    ```
 
-3. **Vérification du Membre**:
-
-    - Vérifie que l'utilisateur est bien membre du serveur dans la table `member`
-    - Si le membre n'est pas trouvé, renvoie une erreur `unknownMember`:
-        ```javascript
-        {
-        	status: 'error',
-        	code: 404,
-        	message: 'UNKNOWN_MEMBER',
-        	details: 'The specified member is not part of the server'
-        }
-        ```
-
-4. **Vérification du Canal**:
-
-    - Recherche le canal dans la table `channel` en utilisant `channelId`
-    - Si le canal n'est pas trouvé, renvoie une erreur `unknownChannel`:
-        ```javascript
-        {
-        	status: 'error',
-        	code: 404,
-        	message: 'UNKNOWN_CHANNEL',
-        	details: 'The specified channel could not be found in the server'
-        }
-        ```
-
-5. **Retour**:
-    - Si toutes les vérifications passent, la fonction renvoie `null`, signifiant que toutes les entités sont valides
-
-#### Exemple d'Utilisation
-
-Cette fonction est appelée au début des mutations et des requêtes pour s'assurer que les entités impliquées existent
-
-```typescript
-const validationError = await verifyUserServerChannel(ctx, args)
-if (validationError) return validationError
-```
-
-Cela permet de stopper l'exécution de l'opération en cas de problème et d'éviter des erreurs de logique ou des accès non autorisés
+-   **Erreurs possibles** :
+    -   `error.messageEmpty`
+    -   `error.messageTooLong`
 
 ---
 
-## Gestion des Erreurs
+### Mettre à Jour un Message (u)
 
-Les fonctions utilisent un objet d'erreurs standardisé pour renvoyer des réponses cohérentes:
+```typescript
+export const u = mutation({
+	args: {
+		userId: v.id('user'),
+		serverId: v.id('server'),
+		channelId: v.id('channel'),
+		messageId: v.id('message'),
+		content: v.string()
+	},
+	handler: async (ctx, { userId, serverId, channelId, messageId, content }) => {
+		// Logic
+	}
+})
+```
 
-| Code d'Erreur      | Statut | Message            | Détails Supplémentaires                                                   |
-| ------------------ | ------ | ------------------ | ------------------------------------------------------------------------- |
-| `unknownUser`      | 404    | UNKNOWN_USER       | The specified user could not be found in the database                     |
-| `unknownServer`    | 404    | UNKNOWN_SERVER     | The specified server could not be found in the list of available servers  |
-| `unknownMember`    | 404    | UNKNOWN_MEMBER     | The specified member is not part of the server                            |
-| `unknownChannel`   | 404    | UNKNOWN_CHANNEL    | The specified channel could not be found in the server                    |
-| `unknownMessage`   | 404    | UNKNOWN_MESSAGE    | The specified message could not be found in the channel                   |
-| `messageEmpty`     | 400    | MESSAGE_EMPTY      | The message content must contain at least one character                   |
-| `messageTooLong`   | 400    | MESSAGE_TOO_LONG   | The message exceeds the allowed character limit                           |
-| `messageDeleted`   | 410    | MESSAGE_DELETED    | The specified message has already been deleted and is no longer available |
-| `messageNotAuthor` | 403    | MESSAGE_NOT_AUTHOR | Only the author of the message can perform this action                    |
-| `messageUnchanged` | 400    | MESSAGE_UNCHANGED  | The new message content must be different from the original               |
+#### Arguments
 
-Les réponses d'erreur incluent toujours un statut HTTP (`code`) et un message d'erreur clair pour faciliter le débogage et la compréhension du problème
+-   **`userId`**: ID de l'utilisateur qui souhaite mettre à jour le message _(doit être un identifiant valide de type `user`)_
+-   **`serverId`**: ID du serveur dans lequel le message est _(doit être un identifiant valide de type `server`)_
+-   **`channelId`**: ID du canal dans lequel se trouve le message _(doit être un identifiant valide de type `channel`)_
+-   **`messageId`**: ID du message à mettre à jour _(doit être un identifiant valide de type `message`)_
+-   **`content`**: Nouveau contenu du message _(doit être une chaîne de caractères)_
+
+#### Fonctionnement
+
+1. Vérifie si le contenu est vide ou dépasse 1000 caractères
+2. Utilise `verifyUSMC` pour valider l'utilisateur, le serveur et le canal
+3. Récupère le message de la base de données
+4. Vérifie si le message existe, s'il est supprimé, si l'utilisateur est autorisé à le modifier, et si le nouveau contenu est différent
+5. Met à jour le message dans la base de données
+6. Retourne un message de succès ou une erreur appropriée
+
+#### Réponse
+
+-   **Succès** :
+
+    ```json
+    {
+    	"status": "success",
+    	"code": 200,
+    	"message": "MESSAGE_UPDATED",
+    	"details": "The message has been successfully updated"
+    }
+    ```
+
+-   **Erreurs possibles** :
+    -   `error.messageEmpty`
+    -   `error.messageTooLong`
+    -   `error.unknownMessage`
+    -   `error.messageDeleted`
+    -   `error.userNotAuthorized`
+    -   `error.messageUnchanged`
+
+---
+
+### Supprimer un Message (d)
+
+```typescript
+export const d = mutation({
+	args: {
+		userId: v.id('user'),
+		serverId: v.id('server'),
+		channelId: v.id('channel'),
+		messageId: v.id('message')
+	},
+	handler: async (ctx, args) => {
+		// Logic
+	}
+})
+```
+
+#### Arguments
+
+-   **`userId`**: ID de l'utilisateur qui souhaite supprimer le message _(doit être un identifiant valide de type `user`)_
+-   **`serverId`**: ID du serveur dans lequel se trouve le message _(doit être un identifiant valide de type `server`)_
+-   **`channelId`**: ID du canal dans lequel se trouve le message _(doit être un identifiant valide de type `channel`)_
+-   **`messageId`**: ID du message à supprimer _(doit être un identifiant valide de type `message`)_
+
+#### Fonctionnement
+
+1. Utilise `verifyUSMC` pour valider l'utilisateur, le serveur et le canal
+2. Récupère le message de la base de données
+3. Vérifie si le message existe, s'il est supprimé, et si l'utilisateur est autorisé à le supprimer
+4. Met à jour le message pour le marquer comme supprimé
+5. Retourne un message de succès ou une erreur appropriée
+
+#### Réponse
+
+-   **Succès** :
+
+    ```json
+    {
+    	"status": "success",
+    	"code": 200,
+    	"message": "MESSAGE_DELETED",
+    	"details": "The message has been successfully deleted"
+    }
+    ```
+
+-   **Erreurs possibles** :
+    -   `error.unknownMessage`
+    -   `error.messageDeleted`
+    -   `error.userNotAuthorized`
+
+---
+
+## 3. Requêtes
+
+### Lister les Messages (l)
+
+```typescript
+export const l = query({
+	args: {
+		userId: v.id('user'),
+		serverId: v.id('server'),
+		channelId: v.id('channel')
+	},
+	handler: async (ctx, args) => {
+		// Logic
+	}
+})
+```
+
+#### Arguments
+
+-   **`userId`**: ID de l'utilisateur effectuant la requête _(doit être un identifiant valide de type `user`)_
+-   **`serverId`**: ID du serveur dans lequel se trouvent les messages _(doit être un identifiant valide de type `server`)_
+-   **`channelId`**: ID du canal dont les messages doivent être récupérés _(doit être un identifiant valide de type `channel`)_
+
+#### Fonctionnement
+
+1. Utilise `verifyUSMC` pour valider l'utilisateur, le serveur et le canal
+2. Récupère les derniers 50 messages du canal spécifié
+3. Pour chaque message, récupère les informations de l'utilisateur qui a envoyé le message
+4. Retourne un message de succès contenant la liste des messages avec les informations des utilisateurs
+
+#### Réponse
+
+-   **Succès** :
+
+    ```json
+    {
+    	"status": "success",
+    	"code": 200,
+    	"message": "MESSAGES_GATHERED",
+    	"details": "The last fifty messages have been successfully retrieved along with user information",
+    	"data": [
+    		/* Liste des messages avec informations utilisateurs */
+    	]
+    }
+    ```
+
+-   **Erreurs possibles** :
+    -   `error.userNotMember`
+
+---
+
+## 4. Gestion des Erreurs
+
+Les erreurs sont gérées à l'aide de la fonction `handleError`, qui prend en entrée l'erreur capturée et retourne un message d'erreur approprié. Les erreurs peuvent inclure des messages d'erreur prédéfinis pour des situations spécifiques (ex. contenu vide, message trop long, utilisateur non autorisé, etc.).

@@ -1,6 +1,6 @@
+import { error, handleError, verifyUSMC } from './errors'
 import { mutation, query } from './_generated/server'
 import { v } from 'convex/values'
-import error from './errors'
 
 export const c = mutation({
 	args: {
@@ -9,10 +9,8 @@ export const c = mutation({
 	},
 	handler: async (ctx, { userId, serverId }) => {
 		try {
-			const user = await ctx.db.get(userId)
-			if (!user) return error.unknownUser
-			const server = await ctx.db.get(serverId)
-			if (!server) return error.unknownServer
+			const validationError = await verifyUSMC(ctx, { userId, serverId })
+			if (validationError) return validationError
 
 			await ctx.db.insert('member', {
 				serverId: serverId,
@@ -23,7 +21,7 @@ export const c = mutation({
 				status: 'success',
 				code: 200,
 				message: 'MEMBER_ADDED',
-				details: "L'utilisateur a bien été ajouté en tant que membre du serveur"
+				details: 'The user has been successfully added as a server member'
 			}
 		} catch (error: unknown) {
 			return handleError(error)
@@ -37,8 +35,8 @@ export const l = query({
 	},
 	handler: async (ctx, { serverId }) => {
 		try {
-			const server = await ctx.db.get(serverId)
-			if (!server) return error.unknownServer
+			const validationError = await verifyUSMC(ctx, { serverId })
+			if (validationError) return validationError
 
 			const members = await ctx.db
 				.query('member')
@@ -49,7 +47,7 @@ export const l = query({
 				status: 'success',
 				code: 200,
 				message: 'MEMBERS_GATHERED',
-				details: 'La liste des membres du serveur on été récupérés',
+				details: 'The server members list has been successfully retrieved',
 				data: members
 			}
 		} catch (error: unknown) {
@@ -65,10 +63,8 @@ export const d = mutation({
 	},
 	handler: async (ctx, { userId, serverId }) => {
 		try {
-			const user = await ctx.db.get(userId)
-			if (!user) return error.unknownUser
-			const server = await ctx.db.get(serverId)
-			if (!server) return error.unknownServer
+			const validationError = await verifyUSMC(ctx, { userId, serverId })
+			if (validationError) return validationError
 
 			const member = await ctx.db
 				.query('member')
@@ -82,25 +78,10 @@ export const d = mutation({
 				status: 'success',
 				code: 200,
 				message: 'MEMBER_DELETED',
-				details: "L'utilisateur a bien été retiré du serveur"
+				details: 'The user has been successfully removed from the server'
 			}
 		} catch (error: unknown) {
 			return handleError(error)
 		}
 	}
 })
-
-function handleError(error: unknown) {
-	throw error instanceof Error
-		? {
-				status: 'error',
-				code: 500,
-				message: error.message || 'Server Error'
-			}
-		: {
-				status: 'error',
-				code: 500,
-				message: 'Unknown Error',
-				details: String(error)
-			}
-}

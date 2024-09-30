@@ -5,26 +5,26 @@ export default defineSchema(
 	{
 		user: defineTable({
 			username: v.string(),
-			picture: v.string(),
+			picture: v.optional(v.union(v.string(), v.null())),
 			authId: v.string()
 		}),
 		server: defineTable({
 			userId: v.id('user'),
 			name: v.string(),
-			ownerId: v.optional(v.string()),
-			description: v.optional(v.string())
+			ownerId: v.optional(v.union(v.string(), v.null())),
+			description: v.optional(v.union(v.string(), v.null()))
 		}),
 		invitCode: defineTable({
 			serverId: v.id('server'),
 			creatorId: v.string(),
 			code: v.string(),
 			uses: v.number(),
-			maxUses: v.optional(v.number()),
-			expiresAt: v.optional(v.number())
+			maxUses: v.optional(v.union(v.number(), v.null())),
+			expiresAt: v.optional(v.union(v.number(), v.null()))
 		}),
 		member: defineTable({
-			serverId: v.id('server'),
-			userId: v.id('user')
+			userId: v.id('user'),
+			serverId: v.id('server')
 		}),
 		channel: defineTable({
 			serverId: v.id('server'),
@@ -32,11 +32,11 @@ export default defineSchema(
 			type: v.optional(v.union(v.literal('text'), v.literal('vocal')))
 		}),
 		message: defineTable({
-			channelId: v.id('channel'),
 			userId: v.id('user'),
+			channelId: v.id('channel'),
 			content: v.string(),
 			modified: v.boolean(),
-			modifiedAt: v.union(v.number(), v.null()),
+			modifiedAt: v.optional(v.union(v.number(), v.null())),
 			deleted: v.boolean()
 		})
 	},

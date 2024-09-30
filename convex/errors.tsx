@@ -1,4 +1,7 @@
-const error = {
+import { MutationCtx, QueryCtx } from './_generated/server'
+import { Id } from './_generated/dataModel'
+
+export const error = {
 	unknownUser: {
 		status: 'error',
 		code: 404,
@@ -23,18 +26,19 @@ const error = {
 		message: 'USERNAME_TOO_LONG',
 		details: 'The username cannot exceed 20 characters'
 	},
-	pictureInvalidUrl: {
-		status: 'error',
-		code: 400,
-		message: 'PICTURE_INVALID_URL',
-		details: 'The picture URL is invalid'
-	},
 	authIdEmpty: {
 		status: 'error',
 		code: 400,
 		message: 'AUTH_ID_EMPTY',
 		details: 'The authentication ID cannot be empty'
 	},
+	userNotAuthorized: {
+		status: 'error',
+		code: 403,
+		message: 'USER_NOT_AUTHORIZED',
+		details: 'You do not have the necessary permissions to perform this action'
+	},
+
 	unknownServer: {
 		status: 'error',
 		code: 404,
@@ -59,7 +63,7 @@ const error = {
 		message: 'SERVER_NAME_TOO_LONG',
 		details: 'The server name cannot exceed 50 characters'
 	},
-	serverDescriptionTooLong: {
+	serverDescTooLong: {
 		status: 'error',
 		code: 400,
 		message: 'SERVER_DESCRIPTION_TOO_LONG',
@@ -71,36 +75,13 @@ const error = {
 		message: 'SERVER_NOT_OWNED',
 		details: 'You do not have permission to perform this action on the server'
 	},
-	invalidInviteCode: {
-		status: 'error',
-		code: 400,
-		message: 'INVALID_INVITE_CODE',
-		details: 'The provided invite code is invalid'
-	},
-	inviteCodeExpired: {
-		status: 'error',
-		code: 410,
-		message: 'INVITE_CODE_EXPIRED',
-		details: 'The invite code has expired and cannot be used'
-	},
-	inviteCodeMaxUsesExceeded: {
-		status: 'error',
-		code: 410,
-		message: 'INVITE_CODE_MAX_USES_EXCEEDED',
-		details: 'The maximum number of uses for this invite code has been reached'
-	},
-	memberAlreadyExists: {
-		status: 'error',
-		code: 409,
-		message: 'MEMBER_ALREADY_EXISTS',
-		details: 'The user is already a member of this server'
-	},
 	userNotMember: {
 		status: 'error',
 		code: 403,
 		message: 'NOT_A_MEMBER',
 		details: 'The user not a member of this server'
 	},
+
 	unknownChannel: {
 		status: 'error',
 		code: 404,
@@ -119,12 +100,50 @@ const error = {
 		message: 'CHANNEL_NAME_TOO_LONG',
 		details: 'The channel name cannot exceed 50 characters'
 	},
+	channelUnchanged: {
+		status: 'error',
+		code: 400,
+		message: 'CHANNEL_UNCHANGED',
+		details: 'No changes were made to the channel informations'
+	},
 	channelTypeInvalid: {
 		status: 'error',
 		code: 400,
 		message: 'CHANNEL_TYPE_INVALID',
 		details: 'The specified channel type is invalid, allowed types are "text" and "vocal"'
 	},
+	tooManyChannels: {
+		status: 'error',
+		code: 403,
+		message: 'TOO_MANY_CHANNELS',
+		details: 'This server reached the channels limit'
+	},
+
+	inviteCodeExpired: {
+		status: 'error',
+		code: 410,
+		message: 'INVITE_CODE_EXPIRED',
+		details: 'The invite code has expired and cannot be used'
+	},
+	inviteCodeInvalid: {
+		status: 'error',
+		code: 400,
+		message: 'INVALID_INVITE_CODE',
+		details: 'The provided invite code is invalid'
+	},
+	inviteCodeMaxUsesExceeded: {
+		status: 'error',
+		code: 410,
+		message: 'INVITE_CODE_MAX_USES_EXCEEDED',
+		details: 'The maximum number of uses for this invite code has been reached'
+	},
+	memberAlreadyExists: {
+		status: 'error',
+		code: 409,
+		message: 'MEMBER_ALREADY_EXISTS',
+		details: 'The user is already a member of this server'
+	},
+
 	unknownMessage: {
 		status: 'error',
 		code: 404,
@@ -143,36 +162,69 @@ const error = {
 		message: 'MESSAGE_TOO_LONG',
 		details: 'The message content exceeds the maximum allowed length of 1000 characters'
 	},
-	messageUnchanged: {
-		status: 'error',
-		code: 400,
-		message: 'MESSAGE_UNCHANGED',
-		details: 'No changes were made to the message content'
-	},
 	messageDeleted: {
 		status: 'error',
 		code: 410,
 		message: 'MESSAGE_DELETED',
 		details: 'The message has been deleted and cannot be accessed'
 	},
-	userNotAuthorized: {
-		status: 'error',
-		code: 403,
-		message: 'USER_NOT_AUTHORIZED',
-		details: 'You do not have the necessary permissions to perform this action'
-	},
-	tooManyChannels: {
-		status: 'error',
-		code: 403,
-		message: 'TOO_MANY_CHANNELS',
-		details: 'This server reached the channels limit'
-	},
-	channelUnchanged: {
+	messageUnchanged: {
 		status: 'error',
 		code: 400,
-		message: 'CHANNEL_UNCHANGED',
-		details: 'No changes were made to the channel informations'
+		message: 'MESSAGE_UNCHANGED',
+		details: 'No changes were made to the message content'
 	}
 }
 
-export default error
+export function handleError(error: unknown) {
+	throw error instanceof Error
+		? {
+				status: 'error',
+				code: 500,
+				message: error.message || 'Server Error'
+			}
+		: {
+				status: 'error',
+				code: 500,
+				message: 'Unknown Error',
+				details: String(error)
+			}
+}
+
+export async function verifyUSMC(
+	ctx: MutationCtx | QueryCtx,
+	{
+		userId,
+		serverId,
+		channelId
+	}: {
+		userId?: Id<'user'>
+		serverId?: Id<'server'>
+		channelId?: Id<'channel'>
+	}
+) {
+	if (userId) {
+		const user = await ctx.db.get(userId)
+		if (!user) return error.unknownUser
+	}
+
+	if (serverId) {
+		const server = await ctx.db.get(serverId)
+		if (!server) return error.unknownServer
+	}
+
+	if (userId && serverId) {
+		const member = await ctx.db
+			.query('member')
+			.filter(q => q.and(q.eq(q.field('userId'), userId), q.eq(q.field('serverId'), serverId)))
+			.first()
+		if (!member) return error.userNotMember
+	}
+
+	if (channelId) {
+		const channel = await ctx.db.get(channelId)
+		if (!channel) return error.unknownChannel
+	}
+
+	return null
+}
